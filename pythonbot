@@ -4,7 +4,7 @@ import json
 import random
 import string
 
-TOKEN = "MTQ3NDAyMzM0MTU3NTc3MDI3Mw.GaDJPI.gaHkf-tczQ5lz4NmYAjFl8JUOAMY8L1vUTECtE"
+TOKEN = ""
 JSON_FILE = "licenses.json"
 
 intents = discord.Intents.default()
