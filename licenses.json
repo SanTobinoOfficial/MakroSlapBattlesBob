@@ -1,38 +1,38 @@
 {
-  "X7KQ-9MPL-2ZRT-8VWN": {
-    "hwid": "",
-    "banned": false
-  },
-  "A4JH-3TKS-9QWE-1ZXC": {
-    "hwid": "2218D3DA-0E51-6465-9CEB-C87F54A93056",
-    "banned": false
-  },
-  "PL9D-7XCV-4BNM-2QAZ": {
-    "hwid": "AA7B0217-8323-A93E-4C99-581122B1EB79",
-    "banned": false
-  },
-  "TR8Y-6UJN-5IKL-3OPQ": {
-    "hwid": "",
-    "banned": false
-  },
-  "MNB7-VFR4-TGB6-YHN2": {
-    "hwid": "4C4C4544-0057-4C10-8030-B6C04F5A4B33",
-    "banned": false
-  },
-  "QWER-TYUI-OPAS-DFGH": {
-    "hwid": "",
-    "banned": false
-  },
-  "ZXCV-BNMK-LPOI-UYTR": {
-    "hwid": "",
-    "banned": false
-  },
-  "HJKL-POIU-YTRE-WQAS": {
-    "hwid": "",
-    "banned": false
-  },
-  "VBNM-ASDF-GHJK-LQWE": {
-    "hwid": "",
-    "banned": false
-  }
+    "X7KQ-9MPL-2ZRT-8VWN": {
+        "hwid": "",
+        "banned": false
+    },
+    "A4JH-3TKS-9QWE-1ZXC": {
+        "hwid": "2218D3DA-0E51-6465-9CEB-C87F54A93056",
+        "banned": false
+    },
+    "PL9D-7XCV-4BNM-2QAZ": {
+        "hwid": "AA7B0217-8323-A93E-4C99-581122B1EB79",
+        "banned": false
+    },
+    "TR8Y-6UJN-5IKL-3OPQ": {
+        "hwid": "F2E68B60-5E13-11EC-810D-7C8AE1C051B3",
+        "banned": false
+    },
+    "MNB7-VFR4-TGB6-YHN2": {
+        "hwid": "4C4C4544-0057-4C10-8030-B6C04F5A4B33",
+        "banned": false
+    },
+    "QWER-TYUI-OPAS-DFGH": {
+        "hwid": "",
+        "banned": false
+    },
+    "ZXCV-BNMK-LPOI-UYTR": {
+        "hwid": "",
+        "banned": false
+    },
+    "HJKL-POIU-YTRE-WQAS": {
+        "hwid": "",
+        "banned": false
+    },
+    "VBNM-ASDF-GHJK-LQWE": {
+        "hwid": "",
+        "banned": false
+    }
 }
