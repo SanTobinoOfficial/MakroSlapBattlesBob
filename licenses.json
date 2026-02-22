@@ -21,7 +21,7 @@
     },
     "TDX7-PVP0-24Z4-LGNB": {
         "hwid": "",
-        "banned": false,
+        "banned": true,
         "note": ""
     }
 }
