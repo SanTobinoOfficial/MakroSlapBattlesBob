@@ -5,19 +5,16 @@ import random
 import string
 import os
 import requests
-import base64
 from aiohttp import web
 import asyncio
 import re
 from datetime import datetime
 
-TOKEN              = os.environ.get("DISCORD_TOKEN", "")
-JSON_FILE          = "licenses.json"
-GITHUB_TOKEN       = os.environ.get("GITHUB_TOKEN", "")
-GITHUB_REPO_OWNER  = os.environ.get("GITHUB_REPO_OWNER", "")
-GITHUB_REPO_NAME   = os.environ.get("GITHUB_REPO_NAME", "")
-ADMIN_CHANNEL_ID   = int(os.environ.get("ADMIN_CHANNEL_ID", "0"))
-WEBHOOK_SECRET     = os.environ.get("WEBHOOK_SECRET", "")
+TOKEN            = os.environ.get("DISCORD_TOKEN", "")
+JSON_FILE        = "licenses.json"
+GIST_TOKEN       = os.environ.get("GIST_TOKEN", "")
+GIST_ID          = os.environ.get("GIST_ID", "")
+ADMIN_CHANNEL_ID = int(os.environ.get("ADMIN_CHANNEL_ID", "0"))
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -66,34 +63,34 @@ def save_licenses(data):
 
 
 async def save_licenses_async(data):
-    """Zapisuje lokalnie i pushuje do GitHub bez blokowania event loop."""
+    """Zapisuje lokalnie i pushuje do Gist bez blokowania event loop."""
+    save_licenses(data)
     loop = asyncio.get_event_loop()
-    with open(JSON_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-    await loop.run_in_executor(None, update_github_file, data)
+    await loop.run_in_executor(None, update_gist, data)
 
 
-def update_github_file(data):
-    if not all([GITHUB_TOKEN, GITHUB_REPO_OWNER, GITHUB_REPO_NAME]):
-        print("GitHub config missing, skipping.")
+def update_gist(data):
+    """Aktualizuje prywatny Gist z licenses.json (nie blokować async — używać przez executor)."""
+    if not all([GIST_TOKEN, GIST_ID]):
+        print("Gist config missing (GIST_TOKEN / GIST_ID), skipping.")
         return
-    url = (f"https://api.github.com/repos/{GITHUB_REPO_OWNER}/"
-           f"{GITHUB_REPO_NAME}/contents/{JSON_FILE}")
+    url     = f"https://api.github.com/gists/{GIST_ID}"
     headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
+        "Authorization": f"token {GIST_TOKEN}",
         "Accept":        "application/vnd.github.v3+json",
     }
+    payload = {
+        "files": {
+            "licenses.json": {
+                "content": json.dumps(data, indent=4)
+            }
+        }
+    }
     try:
-        resp = requests.get(url, headers=headers, timeout=10)
-        sha  = resp.json().get("sha") if resp.status_code == 200 else None
-        encoded = base64.b64encode(json.dumps(data, indent=4).encode()).decode()
-        payload = {"message": "Update licenses.json via Bot", "content": encoded}
-        if sha:
-            payload["sha"] = sha
-        r = requests.put(url, headers=headers, json=payload, timeout=10)
-        print(f"GitHub update: {r.status_code}")
+        r = requests.patch(url, headers=headers, json=payload, timeout=10)
+        print(f"Gist update: {r.status_code}")
     except Exception as e:
-        print(f"Error updating GitHub: {e}")
+        print(f"Error updating Gist: {e}")
 
 
 def generate_key():
@@ -102,11 +99,7 @@ def generate_key():
 
 
 def parse_webhook_message(content: str) -> dict:
-    """
-    Parsuje wiadomości z makra AHK.
-    Jedyny obsługiwany typ: NOWA AKTYWACJA
-    Makro wysyła ten webhook tylko raz (kontrolowane przez sent_info.dat).
-    """
+    """Parsuje wiadomości z makra AHK (NOWA AKTYWACJA)."""
     result = {}
 
     key_m = re.search(
@@ -294,7 +287,6 @@ async def on_message(message):
     changed = False
     notes   = []
 
-    # Przypisz HWID jesli pole jest puste
     if hwid and not data[key].get('hwid'):
         data[key]['hwid'] = hwid
         log_activity("AUTO-ASSIGN", f"HWID {hwid[:12]}... => {key}")
@@ -303,7 +295,6 @@ async def on_message(message):
     elif hwid:
         notes.append("HWID juz przypisany (bez zmian)")
 
-    # Zapisz debug_code tylko jesli pole jest puste (pierwszy raz, nie nadpisuje)
     if dc and not data[key].get('debug_code'):
         data[key]['debug_code'] = dc
         log_activity("DEBUG-CODE", f"Kod debug {key}: {dc}")

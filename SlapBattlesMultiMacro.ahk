@@ -2,18 +2,18 @@
 #SingleInstance Force
 
 ; ╔══════════════════════════════════════════════╗
-; ║   BOB MAKRO  —  v1.3         ║
+; ║   SLAP BATTLES MULTI MACRO  —  v1.4.0       ║
 ; ╚══════════════════════════════════════════════╝
 
 ; ══════════════════════════════════════════════
 ; STAŁE APLIKACJI
 ; ══════════════════════════════════════════════
-global APP_NAME    := "Bob Makro"
-global APP_VERSION := "v1.3"
+global APP_NAME    := "Slap Battles Multi Macro"
+global APP_VERSION := "v1.4.0"
 
 global licenseFile := A_AppData "\SBMM\license.dat"
-global jsonURL     := "https://raw.githubusercontent.com/SanTobinoOfficial/MakroSlapBattlesBob/refs/heads/main/licenses.json"
-global webhookHWID := "https://discord.com/api/webhooks/1474396756291616838/a6h5YDRBo-eGDwCDXYfvNSWe_sDwU2pHbBHQKND4nvvzModeGCUYHdtZjHMXrGh2D2gb"
+global jsonURL     := "https://gist.githubusercontent.com/SanTobinoOfficial/REPLACE_WITH_GIST_ID/raw/licenses.json"
+global webhookHWID := ""
 
 global key  := ""
 global hwid := ""
@@ -69,7 +69,7 @@ global running      := false
 global paused       := false
 global sessionStart := 0
 
-; ── Bob Makro zmienne ──
+; ── BOB zmienne ──
 global P_IniFile     := A_AppData "\SBMM\portal_config.ini"
 global P_HistFile    := A_AppData "\SBMM\portal_historia.txt"
 global P_TotalFile   := A_AppData "\SBMM\portal_total.dat"
@@ -124,6 +124,40 @@ global O_partText, O_totalText, O_timerText, O_pphText, O_etaText, O_progressTex
 ; ══════════════════════════════════════════════
 if !DirExist(A_AppData "\SBMM")
     DirCreate(A_AppData "\SBMM")
+
+; ══════════════════════════════════════════════
+; WARUNKI UŻYTKOWANIA (ToS) — akceptacja raz
+; ══════════════════════════════════════════════
+global tosFile := A_AppData "\SBMM\tos_accepted.dat"
+if !FileExist(tosFile) {
+    tosText := "WARUNKI UŻYTKOWANIA — BOB Makro`n"
+        . "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n`n"
+        . "1. DOZWOLONE UŻYCIE`n"
+        . "   Makro służy wyłącznie do automatyzacji akcji`n"
+        . "   w grze Slap Battles (Roblox) na własnym koncie.`n`n"
+        . "2. ZAKAZ DALSZEJ DYSTRYBUCJI`n"
+        . "   Nie wolno udostępniać, odsprzedawać ani`n"
+        . "   dystrybuować tego oprogramowania bez zgody autora.`n`n"
+        . "3. ODPOWIEDZIALNOŚĆ`n"
+        . "   Użytkownik korzysta z makra na własne ryzyko.`n"
+        . "   Autor nie ponosi odpowiedzialności za ewentualne`n"
+        . "   konsekwencje w grze (ostrzeżenia, bany itp.).`n`n"
+        . "4. ZBIERANIE HWID`n"
+        . "   Unikalny identyfikator sprzętu (HWID) jest wysyłany`n"
+        . "   do administratora wyłącznie w celu weryfikacji`n"
+        . "   licencji. Dane nie są udostępniane osobom trzecim.`n`n"
+        . "5. AKTUALIZACJE`n"
+        . "   Autor zastrzega prawo do aktualizacji warunków.`n"
+        . "   Nowa wersja makra może wymagać ponownej akceptacji.`n`n"
+        . "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n"
+        . "Klikając OK akceptujesz powyższe warunki użytkowania."
+    result := MsgBox(tosText, APP_NAME " — Warunki użytkowania", "OKCancel Icon! 262144")
+    if (result != "OK") {
+        MsgBox "Musisz zaakceptować warunki, aby używać makra.", APP_NAME, 16
+        ExitApp
+    }
+    FileAppend "accepted", tosFile
+}
 
 ; ══════════════════════════════════════════════
 ; POMOCNICZE
@@ -443,18 +477,18 @@ guiMenu.MarginX := 20
 guiMenu.MarginY := 20
 
 guiMenu.SetFont("s13 Bold cF1F5F9", "Segoe UI")
-guiMenu.AddText("xm y20 w360 Center", "⚔  SBMM")
+guiMenu.AddText("xm y20 w360 Center", "⚔  BOB")
 guiMenu.SetFont("s8 c64748B", "Segoe UI")
 guiMenu.AddText("xm y+4 w360 Center", "Wybierz moduł który chcesz uruchomić")
 guiMenu.AddText("xm y+16 w360 h1 0x10", "")
 
 guiMenu.SetFont("s10 Bold cF1F5F9", "Segoe UI")
-guiMenu.AddText("xm y+16 w360", "🌀  Bob Makro")
+guiMenu.AddText("xm y+16 w360", "🌀  BOB")
 guiMenu.SetFont("s8 c94A3B8", "Segoe UI")
 guiMenu.AddText("xm y+4 w360", "Automatyczne farmienie portali i wykrywanie Boba.")
 guiMenu.AddText("xm y+2 w360", "Szansa na Boba: 1/7500")
 guiMenu.SetFont("s9 Bold cF1F5F9", "Segoe UI")
-btnPortal := guiMenu.AddButton("xm y+10 w360 h32", "▶   Uruchom Bob Makro")
+btnPortal := guiMenu.AddButton("xm y+10 w360 h32", "▶   Uruchom BOB")
 
 guiMenu.AddText("xm y+14 w360 h1 0x10", "")
 
@@ -715,7 +749,7 @@ UpdateStatus(txt, col) {
 UpdateTrayTip() {
     global running, activeModule, P_loopCount, P_bobHits, T_brickCount, T_BRICK_GOAL
     if (activeModule = "portal")
-        A_IconTip := "Bob Makro | " (running?"DZIAŁA":"STOP") " | Pętle: " P_loopCount " | Boby: " P_bobHits
+        A_IconTip := "BOB | " (running?"DZIAŁA":"STOP") " | Pętle: " P_loopCount " | Boby: " P_bobHits
     else if (activeModule = "replica")
         A_IconTip := "Replica Bob | " (running?"DZIAŁA":"STOP") " | Kliki: " R_clickCount " | Boby: " R_bobHits
     else if (activeModule = "manualbob")
@@ -737,7 +771,7 @@ CheckGame() {
         : (activeModule = "critglove") ? CG_IniFile
         : T_IniFile
     ap  := SafeNum(IniRead(ini, "Makro", "AutoPauza", "1"), 1)
-    ok  := WinExist("ahk_exe test.exe") ? true : false
+    ok  := WinExist("ahk_exe RobloxPlayerBeta.exe") ? true : false
     try {
         gameText.Text := ok ? "Gra ✓" : "Gra ✗"
         gameText.SetFont(ok ? "c4ADE80" : "cF87171")
@@ -747,8 +781,10 @@ CheckGame() {
     if (running && !paused && !ok) {
         paused := true
         UpdateStatus("PAUZA", "FBBF24")
-        SetTimer(PortalLoop, 0)
-        SetTimer(TrapLoop,   0)
+        SetTimer(PortalLoop,  0)
+        SetTimer(TrapLoop,    0)
+        SetTimer(ObbyLoop,    0)
+        SetTimer(ReplicaLoop, 0)
         try Hotkey MB_hotkey, ManualBobTrigger, "Off"
         try Hotkey CG_hotkey, CritGloveTrigger, "Off"
     } else if (running && paused && ok) {
@@ -826,14 +862,14 @@ BuildPortalGUI() {
     global P_totalLoops, P_BOB_DENOM
 
     W := 300
-    gui1 := Gui("+AlwaysOnTop -MaximizeBox", "Bob Makro — " APP_VERSION)
+    gui1 := Gui("+AlwaysOnTop -MaximizeBox", "SBMM — BOB Portal " APP_VERSION)
     gui1.BackColor := "0A0C12"
     gui1.MarginX := 16
     gui1.MarginY := 14
     gui1.OnEvent("Close", (*) => gui1.Hide())
 
     gui1.SetFont("s12 Bold cF1F5F9", "Segoe UI")
-    gui1.AddText("xm y14 w" W-32 " Center", "🌀  Bob Makro")
+    gui1.AddText("xm y14 w" W-32 " Center", "🌀  BOB")
     gui1.SetFont("s7 c64748B", "Segoe UI")
     gui1.AddText("xm y+2 w" W-32 " Center", APP_NAME "  ·  " APP_VERSION)
     gui1.AddText("xm y+10 w" W-32 " h1 0x10", "")
@@ -937,13 +973,13 @@ OpenPortalSettings(*) {
     LW := 185
     VW := 340 - LW - 8
 
-    gsP := Gui("+AlwaysOnTop +Owner" gui1.Hwnd, "Ustawienia — Bob Makro")
+    gsP := Gui("+AlwaysOnTop +Owner" gui1.Hwnd, "Ustawienia — BOB")
     gsP.BackColor := "0A0C12"
     gsP.MarginX := 16
     gsP.MarginY := 10
 
     gsP.SetFont("s10 Bold cF1F5F9", "Segoe UI")
-    gsP.AddText("xm y10 w340 Center", "Ustawienia — Bob Makro")
+    gsP.AddText("xm y10 w340 Center", "Ustawienia — BOB")
 
     ; OPCJE
     gsP.SetFont("s7 Bold c6366F1", "Segoe UI")
@@ -1039,13 +1075,13 @@ OpenPortalAdvanced(parentGui) {
 
     LW := 185
     VW := 340 - LW - 8
-    gaP := Gui("+AlwaysOnTop +Owner" parentGui.Hwnd, "Zaawansowane — Bob Makro")
+    gaP := Gui("+AlwaysOnTop +Owner" parentGui.Hwnd, "Zaawansowane — BOB")
     gaP.BackColor := "0A0C12"
     gaP.MarginX := 16
     gaP.MarginY := 10
 
     gaP.SetFont("s9 Bold cF1F5F9", "Segoe UI")
-    gaP.AddText("xm y10 w340 Center", "Zaawansowane — Bob Makro")
+    gaP.AddText("xm y10 w340 Center", "Zaawansowane — BOB")
     gaP.SetFont("s7 c94A3B8", "Segoe UI")
     gaP.AddText("xm y+4 w340 Center", "Zapis przez glowne okno ustawien -> Zapisz.")
 
@@ -1117,7 +1153,7 @@ OpenPortalDebug(parentGui, enteredPin) {
         MsgBox "Nieprawidlowy kod PIN.", "Debugowanie", 48
         return
     }
-    gdP := Gui("+AlwaysOnTop +Owner" parentGui.Hwnd, "Debugowanie — Bob Makro")
+    gdP := Gui("+AlwaysOnTop +Owner" parentGui.Hwnd, "Debugowanie — BOB")
     gdP.BackColor := "0A0C12"
     gdP.MarginX := 16
     gdP.MarginY := 10
@@ -1256,7 +1292,7 @@ OpenPortalHistory(*) {
         return
     }
     content := FileRead(P_HistFile)
-    ghP := Gui("+AlwaysOnTop +Owner" gui1.Hwnd, "Historia — Bob Makro")
+    ghP := Gui("+AlwaysOnTop +Owner" gui1.Hwnd, "Historia — BOB")
     ghP.BackColor := "0A0C12"
     ghP.MarginX := 14
     ghP.MarginY := 14
@@ -1665,9 +1701,9 @@ PortalLoop() {
     ;   Czerwony:  R > 160, B < 70, G < 100
 
     ; Rozmiar okna gry (lub cały ekran jako fallback)
-    gameHwnd := WinExist("ahk_exe test.exe")
+    gameHwnd := WinExist("ahk_exe RobloxPlayerBeta.exe")
     if gameHwnd {
-        WinGetPos(&rX, &rY, &rW, &rH, "ahk_exe test.exe")
+        WinGetPos(&rX, &rY, &rW, &rH, "ahk_exe RobloxPlayerBeta.exe")
     } else {
         rX := 0, rY := 0
         rW := A_ScreenWidth
@@ -2183,6 +2219,7 @@ ObbyLoop() {
         if dzwiek {
             gsdO := SafeNum(IniRead(O_IniFile, "Zaawansowane", "GoalSoundDelay", "300"), 300)
             Loop 5 {
+                SoundPlay "*16"
                 Sleep gsdO
             }
         }
