@@ -114,7 +114,7 @@ global O_PART_CD      := 3000
 
 ; ── GUI handles ──
 global gui1
-global statusText, robloxText
+global statusText, gameText
 global P_loopText, P_bobText, P_estText, P_timerText, P_lphText, P_totalText
 global T_brickText, T_totalText, T_timerText, T_bphText, T_etaText, T_progressText, T_progressBar
 global O_partText, O_totalText, O_timerText, O_pphText, O_etaText, O_progressText, O_progressBar
@@ -645,17 +645,17 @@ StartMacro(*) {
         P_bobHits   := 0
         SetTimer(PortalLoop,  10)
         SetTimer(UpdateTimer, 1000)
-        SetTimer(CheckRoblox, 2000)
+        SetTimer(CheckGame, 2000)
     } else if (activeModule = "trap") {
         T_brickCount := 0
         SetTimer(TrapLoop,    T_BRICK_CD)
         SetTimer(UpdateTimer, 1000)
-        SetTimer(CheckRoblox, 2000)
+        SetTimer(CheckGame, 2000)
     } else if (activeModule = "obby") {
         O_partCount  := 0
         SetTimer(ObbyLoop,    O_PART_CD)
         SetTimer(UpdateTimer, 1000)
-        SetTimer(CheckRoblox, 2000)
+        SetTimer(CheckGame, 2000)
     } else if (activeModule = "replica") {
         R_clickCount := 0
         R_bobHits    := 0
@@ -664,20 +664,20 @@ StartMacro(*) {
         cd := SafeNum(IniRead(R_IniFile, "Zaawansowane", "CD", "14000"), 14000)
         SetTimer(ReplicaLoop,  cd)
         SetTimer(UpdateTimer,  1000)
-        SetTimer(CheckRoblox,  2000)
+        SetTimer(CheckGame,  2000)
         ReplicaLoop()
     } else if (activeModule = "manualbob") {
         MB_clickCount := 0
         MB_bobHits    := 0
         MB_hotkey     := IniRead(MB_IniFile, "Zaawansowane", "Hotkey", "e")
         SetTimer(UpdateTimer, 1000)
-        SetTimer(CheckRoblox, 2000)
+        SetTimer(CheckGame, 2000)
         Hotkey MB_hotkey, ManualBobTrigger, "On"
     } else if (activeModule = "critglove") {
         CG_clickCount := 0
         CG_hotkey     := IniRead(CG_IniFile, "Zaawansowane", "Hotkey", "RButton")
         SetTimer(UpdateTimer, 1000)
-        SetTimer(CheckRoblox, 2000)
+        SetTimer(CheckGame, 2000)
         Hotkey CG_hotkey, CritGloveTrigger, "On"
     }
     UpdateStatus("DZIAŁA", "4ADE80")
@@ -695,7 +695,7 @@ StopMacro(*) {
     SetTimer(ObbyLoop,    0)
     SetTimer(ReplicaLoop, 0)
     SetTimer(UpdateTimer, 0)
-    SetTimer(CheckRoblox, 0)
+    SetTimer(CheckGame, 0)
     try Hotkey MB_hotkey, ManualBobTrigger, "Off"
     try Hotkey CG_hotkey, CritGloveTrigger, "Off"
     UpdateStatus("ZATRZYMANE", "F87171")
@@ -729,18 +729,18 @@ UpdateTrayTip() {
 ; ══════════════════════════════════════════════
 ; AUTO-PAUZA
 ; ══════════════════════════════════════════════
-CheckRoblox() {
-    global running, paused, activeModule, robloxText, P_IniFile, T_IniFile, T_BRICK_CD
+CheckGame() {
+    global running, paused, activeModule, gameText, P_IniFile, T_IniFile, T_BRICK_CD
     ini := (activeModule = "portal") ? P_IniFile
         : (activeModule = "replica")   ? R_IniFile
         : (activeModule = "manualbob") ? MB_IniFile
         : (activeModule = "critglove") ? CG_IniFile
         : T_IniFile
     ap  := SafeNum(IniRead(ini, "Makro", "AutoPauza", "1"), 1)
-    ok  := WinExist("ahk_exe RobloxPlayerBeta.exe") ? true : false
+    ok  := WinExist("ahk_exe test.exe") ? true : false
     try {
-        robloxText.Text := ok ? "Roblox ✓" : "Roblox ✗"
-        robloxText.SetFont(ok ? "c4ADE80" : "cF87171")
+        gameText.Text := ok ? "Gra ✓" : "Gra ✗"
+        gameText.SetFont(ok ? "c4ADE80" : "cF87171")
     }
     if !ap
         return
@@ -821,7 +821,7 @@ SaveHistory() {
 ; MODUŁ PORTAL — GUI
 ; ══════════════════════════════════════════════════════════════════
 BuildPortalGUI() {
-    global gui1, statusText, robloxText
+    global gui1, statusText, gameText
     global P_loopText, P_bobText, P_estText, P_timerText, P_lphText, P_totalText
     global P_totalLoops, P_BOB_DENOM
 
@@ -841,7 +841,7 @@ BuildPortalGUI() {
     gui1.SetFont("s9 Bold cF87171", "Segoe UI")
     statusText  := gui1.AddText("xm y+8 w" (W-32)//2, "● ZATRZYMANE")
     gui1.SetFont("s7 c64748B", "Segoe UI")
-    robloxText  := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Roblox —")
+    gameText  := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Gra —")
     gui1.AddText("xm y+8 w" W-32 " h1 0x10", "")
 
     LW := 155 , VW := W-32-LW-2
@@ -950,7 +950,7 @@ OpenPortalSettings(*) {
     gsP.AddText("xm y+10 w340", "OPCJE")
     gsP.AddText("xm y+3 w340 h1 0x10", "")
     gsP.SetFont("s8 c64748B", "Segoe UI")
-    P_apC := gsP.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy Roblox nieaktywny")
+    P_apC := gsP.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy gra nieaktywna")
     P_apC.Value := SafeNum(IniRead(P_IniFile, "Makro", "AutoPauza", "1"), 1)
     P_dzC := gsP.AddCheckbox("xm y+4 w340 c94A3B8", "Dzwiek przy znalezieniu Boba")
     P_dzC.Value := SafeNum(IniRead(P_IniFile, "Makro", "DzwiekBob", "1"), 1)
@@ -1274,7 +1274,7 @@ OpenPortalHistory(*) {
 ; MODUŁ TRAP — GUI
 ; ══════════════════════════════════════════════════════════════════
 BuildTrapGUI() {
-    global gui1, statusText, robloxText
+    global gui1, statusText, gameText
     global T_brickText, T_totalText, T_timerText, T_bphText, T_etaText
     global T_progressText, T_progressBar
     global T_totalBricks, T_BRICK_GOAL
@@ -1295,7 +1295,7 @@ BuildTrapGUI() {
     gui1.SetFont("s9 Bold cF87171", "Segoe UI")
     statusText := gui1.AddText("xm y+8 w" (W-32)//2, "● ZATRZYMANE")
     gui1.SetFont("s7 c64748B", "Segoe UI")
-    robloxText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Roblox —")
+    gameText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Gra —")
     gui1.AddText("xm y+8 w" W-32 " h1 0x10", "")
 
     ; Pasek postępu
@@ -1413,7 +1413,7 @@ OpenTrapSettings(*) {
     gsT.AddText("xm y+10 w340", "OPCJE")
     gsT.AddText("xm y+3 w340 h1 0x10", "")
     gsT.SetFont("s8 c64748B", "Segoe UI")
-    T_apC2 := gsT.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy Roblox nieaktywny")
+    T_apC2 := gsT.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy gra nieaktywna")
     T_apC2.Value := SafeNum(IniRead(T_IniFile, "Makro", "AutoPauza", "1"), 1)
     T_dcC := gsT.AddCheckbox("xm y+4 w340 c94A3B8", "Dzwiek po osiagnieciu celu")
     T_dcC.Value := SafeNum(IniRead(T_IniFile, "Makro", "DzwiekCel", "1"), 1)
@@ -1652,7 +1652,7 @@ PortalLoop() {
     Sleep closeXSleepB
 
     ; ── 3  WYKRYWANIE PORTALI — skalowane do rozdzielczości ────────
-    ; Koordynaty portali skalowane proporcjonalnie do okna Roblox.
+    ; Koordynaty portali skalowane proporcjonalnie do okna gry.
     ; Sprawdzamy siatkę 3x3 pikseli i wymagamy min. 3 trafień — odporne
     ; na fałszywe wykrycia i antyaliasing.
     ;
@@ -1664,10 +1664,10 @@ PortalLoop() {
     ;   Niebieski: B > 160, R < 70, G < 100
     ;   Czerwony:  R > 160, B < 70, G < 100
 
-    ; Rozmiar okna Roblox (lub cały ekran jako fallback)
-    robloxHwnd := WinExist("ahk_exe RobloxPlayerBeta.exe")
-    if robloxHwnd {
-        WinGetPos(&rX, &rY, &rW, &rH, "ahk_exe RobloxPlayerBeta.exe")
+    ; Rozmiar okna gry (lub cały ekran jako fallback)
+    gameHwnd := WinExist("ahk_exe test.exe")
+    if gameHwnd {
+        WinGetPos(&rX, &rY, &rW, &rH, "ahk_exe test.exe")
     } else {
         rX := 0, rY := 0
         rW := A_ScreenWidth
@@ -1851,7 +1851,7 @@ TrapLoop() {
 ; MODUŁ OBBY MASTERY — GUI
 ; ══════════════════════════════════════════════════════════════════
 BuildObbyGUI() {
-    global gui1, statusText, robloxText
+    global gui1, statusText, gameText
     global O_partText, O_totalText, O_timerText, O_pphText, O_etaText
     global O_progressText, O_progressBar
     global O_totalParts, O_PART_GOAL
@@ -1872,7 +1872,7 @@ BuildObbyGUI() {
     gui1.SetFont("s9 Bold cF87171", "Segoe UI")
     statusText := gui1.AddText("xm y+8 w" (W-32)//2, "● ZATRZYMANE")
     gui1.SetFont("s7 c64748B", "Segoe UI")
-    robloxText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Roblox —")
+    gameText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Gra —")
     gui1.AddText("xm y+8 w" W-32 " h1 0x10", "")
 
     ; Pasek postępu
@@ -1994,7 +1994,7 @@ OpenObbySettings(*) {
     gsO.AddText("xm y+10 w340", "OPCJE")
     gsO.AddText("xm y+3 w340 h1 0x10", "")
     gsO.SetFont("s8 c64748B", "Segoe UI")
-    O_apC := gsO.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy Roblox nieaktywny")
+    O_apC := gsO.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy gra nieaktywna")
     O_apC.Value := SafeNum(IniRead(O_IniFile, "Makro", "AutoPauza", "1"), 1)
     O_dcC := gsO.AddCheckbox("xm y+4 w340 c94A3B8", "Dzwiek po osiagnieciu celu")
     O_dcC.Value := SafeNum(IniRead(O_IniFile, "Makro", "DzwiekCel", "1"), 1)
@@ -2215,7 +2215,7 @@ ObbyLoop() {
 ; więc lag w grze nie przesuwa kolejnego kliknięcia.
 ; ══════════════════════════════════════════════════════════════════
 BuildReplicaGUI() {
-    global gui1, statusText, robloxText
+    global gui1, statusText, gameText
     global R_clickText, R_totalText, R_timerText, R_cphText, R_bobText, R_estText
     global R_totalClicks, R_BOB_DENOM
 
@@ -2235,7 +2235,7 @@ BuildReplicaGUI() {
     gui1.SetFont("s9 Bold cF87171", "Segoe UI")
     statusText := gui1.AddText("xm y+8 w" (W-32)//2, "● ZATRZYMANE")
     gui1.SetFont("s7 c64748B", "Segoe UI")
-    robloxText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Roblox —")
+    gameText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Gra —")
     gui1.AddText("xm y+8 w" W-32 " h1 0x10", "")
 
     LW := 155 , VW := W-32-LW-2
@@ -2400,7 +2400,7 @@ OpenReplicaSettings(*) {
     gsR.AddText("xm y+10 w340", "OPCJE")
     gsR.AddText("xm y+3 w340 h1 0x10", "")
     gsR.SetFont("s8 c64748B", "Segoe UI")
-    R_apC_R := gsR.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy Roblox nieaktywny")
+    R_apC_R := gsR.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy gra nieaktywna")
     R_apC_R.Value := SafeNum(IniRead(R_IniFile, "Makro", "AutoPauza", "1"), 1)
     R_dzC_R := gsR.AddCheckbox("xm y+4 w340 c94A3B8", "Dzwiek przy znalezieniu Boba")
     R_dzC_R.Value := SafeNum(IniRead(R_IniFile, "Makro", "DzwiekBob", "1"), 1)
@@ -2649,7 +2649,7 @@ global MB_adv_Hotkey, MB_adv_PreEscSleep, MB_adv_EscSleep, MB_adv_RSleep, MB_adv
 global MB_apC, MB_dzC, MB_siI_ctrl
 
 BuildManualBobGUI() {
-    global gui1, statusText, robloxText
+    global gui1, statusText, gameText
     global MB_clickText, MB_totalText, MB_timerText, MB_cphText, MB_bobText, MB_estText
     global MB_totalClicks, MB_BOB_DENOM
 
@@ -2669,7 +2669,7 @@ BuildManualBobGUI() {
     gui1.SetFont("s9 Bold cF87171", "Segoe UI")
     statusText := gui1.AddText("xm y+8 w" (W-32)//2, "● ZATRZYMANE")
     gui1.SetFont("s7 c64748B", "Segoe UI")
-    robloxText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Roblox —")
+    gameText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Gra —")
     gui1.AddText("xm y+8 w" W-32 " h1 0x10", "")
 
     LW := 155
@@ -2834,7 +2834,7 @@ OpenManualBobSettings(*) {
     gsM.AddText("xm y+10 w340", "OPCJE")
     gsM.AddText("xm y+3 w340 h1 0x10", "")
     gsM.SetFont("s8 c64748B", "Segoe UI")
-    MB_apC := gsM.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy Roblox nieaktywny")
+    MB_apC := gsM.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy gra nieaktywna")
     MB_apC.Value := SafeNum(IniRead(MB_IniFile, "Makro", "AutoPauza", "1"), 1)
     MB_dzC := gsM.AddCheckbox("xm y+4 w340 c94A3B8", "Dzwiek przy znalezieniu Boba")
     MB_dzC.Value := SafeNum(IniRead(MB_IniFile, "Makro", "DzwiekBob", "1"), 1)
@@ -3015,7 +3015,7 @@ global CG_adv_Hotkey, CG_adv_SpaceSleep, CG_adv_ClickSleep_ctrl
 global CG_apC_ctrl, CG_siI_ctrl2
 
 BuildCritGloveGUI() {
-    global gui1, statusText, robloxText
+    global gui1, statusText, gameText
     global CG_clickText, CG_totalText, CG_timerText, CG_cphText
     global CG_totalClicks
 
@@ -3035,7 +3035,7 @@ BuildCritGloveGUI() {
     gui1.SetFont("s9 Bold cF87171", "Segoe UI")
     statusText := gui1.AddText("xm y+8 w" (W-32)//2, "● ZATRZYMANE")
     gui1.SetFont("s7 c64748B", "Segoe UI")
-    robloxText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Roblox —")
+    gameText := gui1.AddText("x+0 yp w" (W-32)//2 " Right", "Gra —")
     gui1.AddText("xm y+8 w" W-32 " h1 0x10", "")
 
     LW := 155
@@ -3162,7 +3162,7 @@ OpenCritGloveSettings(*) {
     gsC.AddText("xm y+10 w340", "OPCJE")
     gsC.AddText("xm y+3 w340 h1 0x10", "")
     gsC.SetFont("s8 c64748B", "Segoe UI")
-    CG_apC_ctrl := gsC.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy Roblox nieaktywny")
+    CG_apC_ctrl := gsC.AddCheckbox("xm y+6 w340 c94A3B8", "Auto-pauza gdy gra nieaktywna")
     CG_apC_ctrl.Value := SafeNum(IniRead(CG_IniFile, "Makro", "AutoPauza", "1"), 1)
 
     ; ZAAWANSOWANE
