@@ -1,10 +1,28 @@
 name: Build & Release
 
-# Trigger: push taga w formacie v1.2.3
+# Trigger: push taga v1.2.3 LUB ręczne uruchomienie z GitHub UI
 on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Wersja release (np. v1.4.1) — tag zostanie utworzony automatycznie'
+        required: true
+        type: string
+      prerelease:
+        description: 'Oznacz jako pre-release?'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+      release_notes:
+        description: 'Notatki do release (opcjonalne, zastąpi domyślny opis)'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -15,17 +33,62 @@ jobs:
       # 1. Pobierz kod
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # 2. Zainstaluj AutoHotkey v2 (cicho, bez interakcji)
+      # 2. Ustaw wersję (z taga lub z inputu manualnego)
+      - name: Ustal wersję
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $ver = "${{ github.event.inputs.version }}"
+            if (-not $ver.StartsWith("v")) { $ver = "v$ver" }
+            echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
+            echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $env:GITHUB_OUTPUT
+          } else {
+            echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
+            echo "IS_PRERELEASE=false" >> $env:GITHUB_OUTPUT
+          }
+
+      # 3. Utwórz i wypchnij tag (tylko przy manual dispatch)
+      - name: Utwórz tag (manual dispatch)
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.VERSION }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Utwórz tag tylko jeśli nie istnieje
+          $existing = git tag -l $ver
+          if (-not $existing) {
+            git tag $ver
+            git push origin $ver
+            Write-Host "Tag $ver utworzony i wypchnięty."
+          } else {
+            Write-Host "Tag $ver już istnieje — pomijam."
+          }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 4. Zainstaluj AutoHotkey v2 (cicho, bez interakcji)
       - name: Zainstaluj AutoHotkey v2
         shell: pwsh
         run: |
-          $url = "https://www.autohotkey.com/download/ahk-v2.exe"
-          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\ahk-setup.exe"
+          # Pobierz najnowszy installer AHK v2 z GitHub Releases (omija Cloudflare)
+          $release = Invoke-RestMethod -Uri "https://api.github.com/repos/AutoHotkey/AutoHotkey/releases/latest"
+          $asset = $release.assets | Where-Object { $_.name -like "*setup*" -and $_.name -notlike "*arm*" } | Select-Object -First 1
+          if (-not $asset) {
+            # Fallback: hardcoded stabilna wersja
+            $asset = @{ browser_download_url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19_setup.exe" }
+          }
+          $url = $asset.browser_download_url
+          Write-Host "Pobieranie AHK z: $url"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\ahk-setup.exe" -UseBasicParsing
           Start-Process -FilePath "$env:TEMP\ahk-setup.exe" -ArgumentList "/S" -Wait
-          Start-Sleep -Seconds 3
+          Start-Sleep -Seconds 5
 
-      # 3. Skompiluj SlapBattlesMultiMacro.ahk → .exe
+      # 5. Skompiluj SlapBattlesMultiMacro.ahk → .exe
       - name: Kompiluj makro
         shell: pwsh
         run: |
@@ -41,29 +104,46 @@ jobs:
           }
           Write-Host "Kompilacja zakończona pomyślnie."
 
-      # 4. Utwórz GitHub Release z plikiem exe
+      # 6. Ustal treść notatek release
+      - name: Przygotuj notatki release
+        id: notes
+        shell: pwsh
+        run: |
+          $ver = "${{ steps.version.outputs.VERSION }}"
+          $custom = "${{ github.event.inputs.release_notes }}"
+          if ($custom) {
+            $body = $custom
+          } else {
+            $body = @"
+          ## Slap Battles Multi Macro $ver
+
+          ### Instalacja
+          1. Pobierz ``SlapBattlesMultiMacro.exe``
+          2. Uruchom plik
+          3. Wpisz klucz licencyjny (otrzymasz od administratora)
+          4. Poczekaj na aktywację HWID
+          5. Uruchom ponownie i wybierz moduł
+
+          ### Wymagania
+          - Windows 10 / 11
+          - Gra uruchomiona przed startem makra
+
+          > Plik exe zawiera wbudowane środowisko AutoHotkey — nie wymaga instalacji AHK.
+          "@
+          }
+          # Zapisz do pliku (unikamy problemów z cudzysłowami w GITHUB_OUTPUT)
+          $body | Out-File -FilePath "release_notes.txt" -Encoding utf8
+
+      # 7. Utwórz GitHub Release z plikiem exe
       - name: Utwórz Release
         uses: softprops/action-gh-release@v2
         with:
-          name: "Slap Battles Multi Macro ${{ github.ref_name }}"
-          body: |
-            ## Slap Battles Multi Macro ${{ github.ref_name }}
-
-            ### Instalacja
-            1. Pobierz `SlapBattlesMultiMacro.exe`
-            2. Uruchom plik
-            3. Wpisz klucz licencyjny (otrzymasz od administratora)
-            4. Poczekaj na aktywację HWID
-            5. Uruchom ponownie i wybierz moduł
-
-            ### Wymagania
-            - Windows 10 / 11
-            - Gra uruchomiona przed startem makra
-
-            > Plik exe zawiera wbudowane środowisko AutoHotkey — nie wymaga instalacji AHK.
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: "Slap Battles Multi Macro ${{ steps.version.outputs.VERSION }}"
+          body_path: release_notes.txt
           files: SlapBattlesMultiMacro.exe
           generate_release_notes: false
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.version.outputs.IS_PRERELEASE == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
