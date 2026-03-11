@@ -12,13 +12,24 @@ Plik `SlapBattlesMultiMacro.exe` — nie wymaga instalacji AutoHotkey.
 
 ---
 
+## Wymagania systemowe
+
+- **Windows 10 / 11** (64-bit)
+- **Uruchomienie jako Administrator** — wymagane do odczytu HWID przez WMI
+- Roblox uruchomiony przed startem makra
+
+> **Ważne:** Uruchom plik prawym przyciskiem myszy → **"Uruchom jako administrator"**.
+> Bez uprawnień administratora makro nie może pobrać identyfikatora HWID i zgłosi błąd `Odmowa dostępu`.
+
+---
+
 ## Pierwsze uruchomienie
 
-1. Uruchom `SlapBattlesMultiMacro.exe`
+1. Kliknij prawym przyciskiem na `SlapBattlesMultiMacro.exe` → **Uruchom jako administrator**
 2. Przeczytaj i zaakceptuj [Warunki Użytkowania](docs/ToS-Makro.md) (otwierają się w przeglądarce)
 3. Wpisz klucz licencyjny (format: `XXXX-XXXX-XXXX-XXXX`)
 4. Makro wyśle Twój HWID do administratora — **poczekaj na aktywację**
-5. Po aktywacji uruchom makro ponownie
+5. Po aktywacji uruchom makro ponownie (jako administrator)
 6. Wybierz moduł z menu głównego
 
 ---
