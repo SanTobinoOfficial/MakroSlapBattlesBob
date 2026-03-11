@@ -2,14 +2,14 @@
 #SingleInstance Force
 
 ; ╔══════════════════════════════════════════════╗
-; ║   SLAP BATTLES MULTI MACRO  —  v1.4.0       ║
+; ║   SLAP BATTLES MULTI MACRO  —  v1.4.1       ║
 ; ╚══════════════════════════════════════════════╝
 
 ; ══════════════════════════════════════════════
 ; STAŁE APLIKACJI
 ; ══════════════════════════════════════════════
 global APP_NAME    := "Slap Battles Multi Macro"
-global APP_VERSION := "v1.4.0"
+global APP_VERSION := "v1.4.1"
 
 global licenseFile := A_AppData "\SBMM\license.dat"
 global jsonURL     := "https://gist.githubusercontent.com/SanTobinoOfficial/4700f4452a52144b6e3922501b55dcf1/raw/licenses.json"
@@ -130,27 +130,19 @@ if !DirExist(A_AppData "\SBMM")
 ; ══════════════════════════════════════════════
 global tosFile := A_AppData "\SBMM\tos_accepted.dat"
 if !FileExist(tosFile) {
-    tosText := "WARUNKI UŻYTKOWANIA — BOB Makro`n"
+    ; Otwórz pełne Warunki Użytkowania w przeglądarce
+    Run "https://github.com/SanTobinoOfficial/BOB/blob/main/docs/ToS-Makro.md"
+    tosText := "WARUNKI UŻYTKOWANIA — Slap Battles Multi Macro " APP_VERSION "`n"
         . "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n`n"
-        . "1. DOZWOLONE UŻYCIE`n"
-        . "   Makro służy wyłącznie do automatyzacji akcji`n"
-        . "   w grze Slap Battles (Roblox) na własnym koncie.`n`n"
-        . "2. ZAKAZ DALSZEJ DYSTRYBUCJI`n"
-        . "   Nie wolno udostępniać, odsprzedawać ani`n"
-        . "   dystrybuować tego oprogramowania bez zgody autora.`n`n"
-        . "3. ODPOWIEDZIALNOŚĆ`n"
-        . "   Użytkownik korzysta z makra na własne ryzyko.`n"
-        . "   Autor nie ponosi odpowiedzialności za ewentualne`n"
-        . "   konsekwencje w grze (ostrzeżenia, bany itp.).`n`n"
-        . "4. ZBIERANIE HWID`n"
-        . "   Unikalny identyfikator sprzętu (HWID) jest wysyłany`n"
-        . "   do administratora wyłącznie w celu weryfikacji`n"
-        . "   licencji. Dane nie są udostępniane osobom trzecim.`n`n"
-        . "5. AKTUALIZACJE`n"
-        . "   Autor zastrzega prawo do aktualizacji warunków.`n"
-        . "   Nowa wersja makra może wymagać ponownej akceptacji.`n`n"
+        . "Pełna treść warunków została otwarta w przeglądarce:`n"
+        . "github.com/SanTobinoOfficial/BOB`n`n"
+        . "Skrót kluczowych zasad:`n"
+        . "• Makro tylko na własnym koncie Roblox`n"
+        . "• Zakaz sprzedaży i udostępniania klucza`n"
+        . "• Używasz na własne ryzyko (ban w grze)`n"
+        . "• HWID wysyłany raz do admina (weryfikacja licencji)`n`n"
         . "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`n"
-        . "Klikając OK akceptujesz powyższe warunki użytkowania."
+        . "Klikając OK akceptujesz pełne Warunki Użytkowania."
     result := MsgBox(tosText, APP_NAME " — Warunki użytkowania", "OKCancel Icon! 262144")
     if (result != "OK") {
         MsgBox "Musisz zaakceptować warunki, aby używać makra.", APP_NAME, 16

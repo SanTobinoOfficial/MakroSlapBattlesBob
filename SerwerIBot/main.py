@@ -89,7 +89,7 @@ def load_from_gist():
 async def save_licenses_async(data):
     """Zapisuje lokalnie i pushuje do Gist bez blokowania event loop."""
     save_licenses(data)
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, update_gist, data)
 
 
@@ -253,7 +253,16 @@ async def list_cmd(ctx):
         dc         = v.get("debug_code", "") or "-"
         note_s     = f" | {v.get('note','')[:20]}" if v.get("note") else ""
         lines.append(f"[{status}] `{k}` HWID:`{hwid_short}` Debug:`{dc}`{note_s}")
-    await ctx.send(f"**Klucze ({len(data)}):**\n" + "\n".join(lines))
+    header = f"**Klucze ({len(data)}):**\n"
+    # Discord limit: 2000 znaków — wysyłaj w kawałkach
+    chunk = header
+    for line in lines:
+        if len(chunk) + len(line) + 1 > 1900:
+            await ctx.send(chunk)
+            chunk = ""
+        chunk += line + "\n"
+    if chunk:
+        await ctx.send(chunk)
 
 
 @bot.command()
@@ -277,8 +286,8 @@ async def delete(ctx, key):
         return await ctx.send("Nie znaleziono klucza")
     del data[key]
     await save_licenses_async(data)
-    log_activity("DELETE", f"Klucz {key} usuniety przez {ctx.author}")
-    await ctx.send(f"Klucz `{key}` usuniety")
+    log_activity("DELETE", f"Klucz {key} usunięty przez {ctx.author}")
+    await ctx.send(f"Klucz `{key}` usunięty")
 
 
 # ── Webhook auto-handler ──────────────────────────────────────────
@@ -445,7 +454,7 @@ async def start_webserver():
 @bot.event
 async def on_ready():
     print(f"Bot online: {bot.user}")
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     await loop.run_in_executor(None, load_from_gist)
     await start_webserver()
 
