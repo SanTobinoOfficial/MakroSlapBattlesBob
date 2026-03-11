@@ -68,29 +68,44 @@ jobs:
             Write-Host "Tag $ver juz istnieje."
           }
 
-      - name: Zainstaluj AutoHotkey v2
+      - name: Zainstaluj AutoHotkey v2 i Ahk2Exe
         shell: pwsh
         run: |
-          $url = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_v2.0.19_setup.exe"
-          Write-Host "Pobieranie AHK v2.0.19 z GitHub..."
-          Invoke-WebRequest -Uri $url -OutFile "ahk_setup.exe" -UseBasicParsing
-          Write-Host "Instalacja..."
-          Start-Process "ahk_setup.exe" -ArgumentList "/S" -Wait
-          Write-Host "Pliki po instalacji:"
-          Get-ChildItem "C:\Program Files\AutoHotkey\" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object FullName
+          New-Item -ItemType Directory -Path "C:\AHK2" -Force | Out-Null
+
+          Write-Host "Pobieranie AutoHotkey64.exe..."
+          $ahkUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip"
+          Invoke-WebRequest -Uri $ahkUrl -OutFile "ahk.zip" -UseBasicParsing
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = [System.IO.Compression.ZipFile]::OpenRead("ahk.zip")
+          $entry = $zip.Entries | Where-Object { $_.Name -eq "AutoHotkey64.exe" } | Select-Object -First 1
+          [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, "C:\AHK2\AutoHotkey64.exe", $true)
+          $zip.Dispose()
+
+          Write-Host "Pobieranie Ahk2Exe..."
+          $a2eUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip"
+          Invoke-WebRequest -Uri $a2eUrl -OutFile "ahk2exe.zip" -UseBasicParsing
+          $zip2 = [System.IO.Compression.ZipFile]::OpenRead("ahk2exe.zip")
+          $entry2 = $zip2.Entries | Where-Object { $_.Name -eq "Ahk2Exe.exe" } | Select-Object -First 1
+          [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry2, "C:\AHK2\Ahk2Exe.exe", $true)
+          $zip2.Dispose()
+
+          Write-Host "Gotowe:"
+          Get-ChildItem "C:\AHK2\"
 
       - name: Kompiluj makro
         shell: pwsh
         run: |
-          $compiler = Get-ChildItem "C:\Program Files\AutoHotkey\" -Recurse -Filter "Ahk2Exe.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          $compiler = "C:\AHK2\Ahk2Exe.exe"
+          $ahk = "C:\AHK2\AutoHotkey64.exe"
 
-          if (-not $compiler) {
+          if (-not (Test-Path $compiler)) {
             Write-Error "Nie znaleziono Ahk2Exe.exe!"
             exit 1
           }
 
           Write-Host "Kompilator: $compiler"
-          & $compiler /in "SlapBattlesMultiMacro.ahk" /out "SlapBattlesMultiMacro.exe" /compress 2
+          & $compiler /in "SlapBattlesMultiMacro.ahk" /out "SlapBattlesMultiMacro.exe" /ahk "$ahk" /compress 2
 
           if (!(Test-Path "SlapBattlesMultiMacro.exe")) {
             Write-Error "Kompilacja nie powiodla sie!"
