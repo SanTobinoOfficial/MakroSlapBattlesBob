@@ -105,7 +105,16 @@ jobs:
           }
 
           Write-Host "Kompilator: $compiler"
-          & $compiler /in "SlapBattlesMultiMacro.ahk" /out "SlapBattlesMultiMacro.exe" /ahk "$ahk" /compress 2
+          Write-Host "Interpreter: $ahk"
+
+          & $compiler /in "SlapBattlesMultiMacro.ahk" /out "SlapBattlesMultiMacro.exe" /ahk "$ahk"
+          Write-Host "Ahk2Exe exit code: $LASTEXITCODE"
+
+          if (!(Test-Path "SlapBattlesMultiMacro.exe")) {
+            Write-Host "Proba bez /ahk..."
+            & $compiler /in "SlapBattlesMultiMacro.ahk" /out "SlapBattlesMultiMacro.exe"
+            Write-Host "Ahk2Exe exit code (2): $LASTEXITCODE"
+          }
 
           if (!(Test-Path "SlapBattlesMultiMacro.exe")) {
             Write-Error "Kompilacja nie powiodla sie!"
