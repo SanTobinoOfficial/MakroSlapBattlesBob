@@ -97,7 +97,7 @@ jobs:
         shell: pwsh
         run: |
           $compiler = "C:\AHK2\Ahk2Exe.exe"
-          $ahk = "C:\AHK2\AutoHotkey64.exe"
+          $base = "C:\AHK2\AutoHotkey64.exe"
           $src = (Resolve-Path "SlapBattlesMultiMacro.ahk").Path
           $out = (Join-Path $PWD "SlapBattlesMultiMacro.exe")
 
@@ -106,28 +106,25 @@ jobs:
             exit 1
           }
 
-          Write-Host "Kompilator: $compiler"
-          Write-Host "Zrodlo: $src"
-          Write-Host "Wyjscie: $out"
-
-          $proc = Start-Process -FilePath $compiler `
-            -ArgumentList "/in `"$src`" /out `"$out`" /ahk `"$ahk`"" `
-            -NoNewWindow -Wait -PassThru
-          Write-Host "Ahk2Exe exit code: $($proc.ExitCode)"
-
-          if (!(Test-Path $out)) {
-            Write-Host "Proba bez /ahk..."
-            $proc2 = Start-Process -FilePath $compiler `
-              -ArgumentList "/in `"$src`" /out `"$out`"" `
-              -NoNewWindow -Wait -PassThru
-            Write-Host "Ahk2Exe exit code (2): $($proc2.ExitCode)"
+          Write-Host "Uruchamiam Ahk2Exe z /base..."
+          $psi = New-Object System.Diagnostics.ProcessStartInfo
+          $psi.FileName = $compiler
+          $psi.Arguments = "/in `"$src`" /out `"$out`" /base `"$base`""
+          $psi.UseShellExecute = $false
+          $p = [System.Diagnostics.Process]::Start($psi)
+          $finished = $p.WaitForExit(90000)
+          if (-not $finished) {
+            Write-Host "Timeout 90s - zabijam, sprawdzam czy exe powstal..."
+            $p.Kill()
+          } else {
+            Write-Host "Exit code: $($p.ExitCode)"
           }
 
           if (!(Test-Path $out)) {
-            Write-Error "Kompilacja nie powiodla sie!"
+            Write-Error "Kompilacja nie powiodla sie - brak SlapBattlesMultiMacro.exe"
             exit 1
           }
-          Write-Host "OK - SlapBattlesMultiMacro.exe gotowy."
+          Write-Host "OK - SlapBattlesMultiMacro.exe gotowy. Rozmiar: $((Get-Item $out).Length) bajtow"
 
       - name: Przygotuj notatki release
         shell: pwsh
