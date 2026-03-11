@@ -15,7 +15,7 @@ Plik `SlapBattlesMultiMacro.exe` — nie wymaga instalacji AutoHotkey.
 ## Pierwsze uruchomienie
 
 1. Uruchom `SlapBattlesMultiMacro.exe`
-2. Zaakceptuj Warunki Użytkowania
+2. Przeczytaj i zaakceptuj [Warunki Użytkowania](docs/ToS-Makro.md) (otwierają się w przeglądarce)
 3. Wpisz klucz licencyjny (format: `XXXX-XXXX-XXXX-XXXX`)
 4. Makro wyśle Twój HWID do administratora — **poczekaj na aktywację**
 5. Po aktywacji uruchom makro ponownie
@@ -35,25 +35,25 @@ Plik `SlapBattlesMultiMacro.exe` — nie wymaga instalacji AutoHotkey.
 
 ## Moduły
 
-### 🌀 BOB — Portal
+### BOB — Portal
 Automatycznie klika portal, wykrywa kolory baz i wykonuje sekwencję ruchu i resetu.
 **Szansa na Boba: 1/7500**
 
-### 🧱 Trap — Brick Master
+### Trap — Brick Master
 Automatycznie klika cegłę co 5 sekund. Cel: 1000 cegieł (odznaka Brick Master).
 
-### 🏗️ Obby Mastery
+### Obby Mastery
 Automatycznie kładzie części Obby co 3 sekundy. Cel: 2000 części (Quest 3 Mastery).
 
-### ⚡ Replica Bob
+### Replica Bob
 Automatycznie klika E co 14 sekund (cooldown repliki Boba).
 **Szansa na Boba: 1/7500**
 
-### 🖐 Manual Bob
+### Manual Bob
 Po naciśnięciu przypisanego klawisza wykonuje sekwencję: `Esc → R → Enter` (respawn).
 Domyślny klawisz: `E`
 
-### 💥 Critical Glove
+### Critical Glove
 Po naciśnięciu przypisanego klawisza wykonuje combo: `Spacja + LPM` (trafienie krytyczne przez skok).
 Domyślny klawisz: Prawy przycisk myszy
 
@@ -70,6 +70,17 @@ Każdy moduł ma własne okno ustawień (przycisk **⚙ Ustawienia**):
 
 Konfiguracja zapisywana jest automatycznie w:
 `%AppData%\SBMM\`
+
+---
+
+## Dokumenty prawne
+
+| Dokument | Dotyczy |
+|----------|---------|
+| [Warunki Użytkowania — Makro](docs/ToS-Makro.md) | Zasady korzystania z programu `SlapBattlesMultiMacro.exe` |
+| [Polityka Prywatności — Makro](docs/PrivacyPolicy-Makro.md) | Jakie dane zbiera Makro i jak są chronione |
+| [Warunki Użytkowania — Bot](docs/ToS-Bot.md) | Zasady korzystania z bota administracyjnego Discord |
+| [Polityka Prywatności — Bot](docs/PrivacyPolicy-Bot.md) | Jakie dane przetwarza Bot i jak są chronione |
 
 ---
 
@@ -154,9 +165,12 @@ Panel administracyjny dostępny na porcie `5000`.
 Release tworzony jest automatycznie przez GitHub Actions przy każdym nowym tagu:
 
 ```bash
-git tag v1.4.1
-git push origin v1.4.1
+git tag v1.4.2
+git push origin v1.4.2
 ```
+
+Możesz też uruchomić release ręcznie z GitHub UI:
+**Actions → Build & Release → Run workflow** → podaj wersję
 
 GitHub Actions automatycznie:
 1. Kompiluje `SlapBattlesMultiMacro.ahk` → `SlapBattlesMultiMacro.exe`
@@ -168,9 +182,14 @@ GitHub Actions automatycznie:
 
 ```
 /
-├── SlapBattlesMultiMacro.ahk   ← główny plik makra
+├── SlapBattlesMultiMacro.ahk   ← główny plik makra (AutoHotkey v2)
 ├── .gitignore
 ├── README.md
+├── docs/
+│   ├── ToS-Makro.md            ← Warunki Użytkowania — Makro
+│   ├── ToS-Bot.md              ← Warunki Użytkowania — Bot Discord
+│   ├── PrivacyPolicy-Makro.md  ← Polityka Prywatności — Makro
+│   └── PrivacyPolicy-Bot.md    ← Polityka Prywatności — Bot Discord
 ├── .github/
 │   └── workflows/
 │       └── release.yml         ← auto-kompilacja i release
