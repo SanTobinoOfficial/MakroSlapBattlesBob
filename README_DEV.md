@@ -2,18 +2,12 @@
 
 ## Wymagania uruchomieniowe
 
-> **Makro MUSI byc uruchomione jako Administrator.**
+Makro nie wymaga uprawnien administratora.
 
-Funkcja `GetHWID()` (linia 132) uzywa WMI (`Win32_ComputerSystemProduct`) przez
-`ComObjGet("winmgmts:")`. Dostep do WMI wymaga uprawnien administratora.
-Bez nich pojawia sie blad `0x80070005 Odmowa dostepu` i makro nie uruchomi sie.
+Funkcja `GetHWID()` (linia 180) odczytuje `MachineGuid` z rejestru:
+`HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid`
 
-Bez uruchomienia jako administrator:
-- `ComObjGet("winmgmts:")` zwraca string bledu zamiast obiektu COM
-- `ExecQuery()` nie istnieje na stringu — blad `This value of type "String" has no method named "ExecQuery"`
-- Makro konczy dzialanie w sekcji auto-execute
-
-**Rozwiazanie:** Kliknij prawym przyciskiem → "Uruchom jako administrator".
+Rejestr ten jest dostepny bez uprawnien administratora i dziala na wszystkich konfiguracjach Windows 10/11.
 
 ---
 
@@ -49,7 +43,7 @@ Startup
 | `paused` | Boolean | Czy makro jest zapauzowane (gra nieaktywna) |
 | `sessionStart` | Integer | `A_TickCount` momentu startu — do liczenia czasu sesji |
 | `key` | String | Klucz licencyjny wczytany z `license.dat` |
-| `hwid` | String | HWID urządzenia (z WMI: `Win32_ComputerSystemProduct.UUID`) — wymaga uprawnien administratora |
+| `hwid` | String | HWID urządzenia (z rejestru: `HKLM\SOFTWARE\Microsoft\Cryptography\MachineGuid`) |
 | `licenseFile` | String | Ścieżka do `%AppData%\SBMM\license.dat` |
 | `jsonURL` | String | URL do pliku `licenses.json` na GitHub Gist (raw) |
 | `webhookHWID` | String | URL webhooka Discord do rejestracji HWID |

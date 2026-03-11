@@ -178,8 +178,11 @@ FormatLoops(n) {
 ; HWID
 ; ══════════════════════════════════════════════
 GetHWID() {
-    for item in ComObjGet("winmgmts:").ExecQuery("Select * from Win32_ComputerSystemProduct")
-        return item.UUID
+    try {
+        id := RegRead("HKLM\SOFTWARE\Microsoft\Cryptography", "MachineGuid")
+        if (id != "")
+            return id
+    }
     return "UNKNOWN"
 }
 
