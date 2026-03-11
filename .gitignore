@@ -1,0 +1,24 @@
+# ── Licencje (przechowywane w prywatnym Gist, NIE w repo) ──────────
+licenses.json
+SerwerIBot/licenses.json
+
+# ── Zmienne środowiskowe (sekrety) ────────────────────────────────
+.env
+*.env
+SerwerIBot/.env
+
+# ── Python ────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+
+# ── System ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Skompilowane pliki AHK ─────────────────────────────────────────
+# (generowane przez GitHub Actions, nie trzymamy w repo)
+*.exe

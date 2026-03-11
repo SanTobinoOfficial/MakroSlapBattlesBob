@@ -1,203 +1,184 @@
-# BOB v1.3 — Instrukcja użytkownika
+# Slap Battles Multi Macro
 
-## Czym jest BOB?
-
-BOB to narzędzie do **testowania systemów anti-cheat** w grze.
-Składa się z 6 niezależnych modułów symulujących automatyczne akcje gracza —
-używane wyłącznie do weryfikacji skuteczności zabezpieczeń.
+Makro do automatyzacji farmowania odznak i przedmiotów w **Slap Battles** (Roblox).
+Składa się z 6 niezależnych modułów, systemu licencji opartego na HWID oraz panelu administracyjnego.
 
 ---
 
-## Wymagania
+## Pobieranie
 
-- Windows 10 / 11
-- AutoHotkey v2.0 (pobierz z https://www.autohotkey.com)
-- Gra uruchomiona w trybie pełnoekranowym lub w oknie
+Pobierz najnowszą wersję z zakładki **[Releases](../../releases/latest)**.
+Plik `SlapBattlesMultiMacro.exe` — nie wymaga instalacji AutoHotkey.
 
 ---
 
 ## Pierwsze uruchomienie
 
-1. Uruchom plik `BOB.ahk`
-2. Przy pierwszym uruchomieniu pojawi się okno z prośbą o klucz licencyjny
-3. Wpisz swój klucz (format: `XXXX-XXXX-XXXX-XXXX`)
-4. Makro wysyła Twój HWID do administratora — poczekaj na aktywację
+1. Uruchom `SlapBattlesMultiMacro.exe`
+2. Zaakceptuj Warunki Użytkowania
+3. Wpisz klucz licencyjny (format: `XXXX-XXXX-XXXX-XXXX`)
+4. Makro wyśle Twój HWID do administratora — **poczekaj na aktywację**
 5. Po aktywacji uruchom makro ponownie
 6. Wybierz moduł z menu głównego
 
 ---
 
-## Skróty klawiszowe (globalne)
+## Skróty klawiszowe
 
 | Klawisz | Akcja |
 |---------|-------|
-| F6 | Start / Stop makra (przełącznik) |
-| F8 | Bezpieczne wyjście (zapisuje dane) |
-| F9 | Panic Stop — natychmiastowe zatrzymanie i zwolnienie klawiszy |
+| `F6` | Start / Stop (przełącznik) |
+| `F8` | Bezpieczne wyjście (zapisuje dane) |
+| `F9` | Panic Stop — zatrzymanie + zwolnienie wszystkich klawiszy |
 
 ---
 
 ## Moduły
 
-### 1. 🌀 BOB — Portal
-Automatycznie klika portal, wykrywa kolory baz (niebieska/czerwona),
-wykonuje sekwencję ruchu i resetu postaci.
+### 🌀 BOB — Portal
+Automatycznie klika portal, wykrywa kolory baz i wykonuje sekwencję ruchu i resetu.
+**Szansa na Boba: 1/7500**
 
-**Jak używać:**
-- Ustaw postać przy portalu w grze
-- Skonfiguruj współrzędne portalu w Ustawieniach Zaawansowanych
-- Naciśnij Start lub F6
+### 🧱 Trap — Brick Master
+Automatycznie klika cegłę co 5 sekund. Cel: 1000 cegieł (odznaka Brick Master).
 
-**Statystyki:** Pętle sesji, Boby znalezione, Szacowane Boby, Czas sesji, Pętle/h
+### 🏗️ Obby Mastery
+Automatycznie kładzie części Obby co 3 sekundy. Cel: 2000 części (Quest 3 Mastery).
 
----
-
-### 2. 🧱 Trap / Brick Master
-Automatycznie klika cegłę co ustalony interwał (domyślnie co 5 sekund).
-Zlicza cegły aż do osiągnięcia celu (domyślnie 1000).
-
-**Jak używać:**
-- Wejdź na testową mapę Trap w grze
-- Ustaw cel w Ustawieniach
-- Naciśnij Start lub F6
-
-**Statystyki:** Cegły sesji, Cegły łącznie, Postęp %, Czas, Cegły/h, ETA
-
----
-
-### 3. 🏗️ Obby Mastery — Place Parts
-Automatycznie kładzie części Obby co ustalony interwał (domyślnie co 3 sekundy).
-Cel: 2000 części (Quest 3 Mastery).
-
-**Jak używać:**
-- Wejdź na testową mapę Obby w grze
-- Naciśnij Start lub F6
-
-**Statystyki:** Części sesji, Części łącznie, Postęp %, Czas, Części/h, ETA
-
----
-
-### 4. ⚡ Replica Bob — prosty klik
+### ⚡ Replica Bob
 Automatycznie klika E co 14 sekund (cooldown repliki Boba).
-Szansa na uzyskanie Boba: 1/7500.
+**Szansa na Boba: 1/7500**
 
-**Jak używać:**
-- Wyekwipuj Replikę Boba w grze
-- Naciśnij Start lub F6 — makro klika od razu
+### 🖐 Manual Bob
+Po naciśnięciu przypisanego klawisza wykonuje sekwencję: `Esc → R → Enter` (respawn).
+Domyślny klawisz: `E`
 
-**Statystyki:** Kliki sesji, Boby, Szacowane Boby, Czas, Kliki/h
-
----
-
-### 5. 🖐 Manual Bob — ręczny respawn
-Wykonuje sekwencję resetu postaci po naciśnięciu przypisanego klawisza.
-
-**Sekwencja:**
-1. (Opcjonalnie) Sleep przed Esc
-2. Naciśnięcie Escape
-3. Sleep po Esc
-4. Naciśnięcie R (Respawn)
-5. Sleep po R
-6. Naciśnięcie Enter
-7. Sleep po Enter
-
-**Domyślny klawisz:** `E`
-Klawisz można zmienić w Ustawieniach Zaawansowanych — naciśnij przycisk
-"Kliknij i naciśnij klawisz" i wciśnij fizyczny klawisz lub przycisk myszy.
-
-**Statystyki:** Kliki sesji, Boby, Szacowane Boby, Czas, Kliki/h
+### 💥 Critical Glove
+Po naciśnięciu przypisanego klawisza wykonuje combo: `Spacja + LPM` (trafienie krytyczne przez skok).
+Domyślny klawisz: Prawy przycisk myszy
 
 ---
 
-### 6. 💥 Critical Glove — auto klik
-Po naciśnięciu przypisanego klawisza wykonuje combo:
-Spacja (skok) → Sleep → LPM (kliknięcie w powietrzu = trafienie krytyczne).
+## Konfiguracja
 
-**Domyślny klawisz:** Prawy przycisk myszy (`RButton`)
-Klawisz można zmienić w Ustawieniach Zaawansowanych.
+Każdy moduł ma własne okno ustawień (przycisk **⚙ Ustawienia**):
 
-**Statystyki:** Kliki sesji, Kliki łącznie, Czas, Kliki/h
+- **Auto-pauza** — wstrzymuje makro gdy Roblox nie jest aktywny
+- **Webhook Discord** — URL webhooka do raportowania statystyk
+- **Zaawansowane timingowe** — precyzyjne dostosowanie opóźnień
+- **Debugowanie** (chronione kodem PIN) — krytyczne ustawienia
 
----
-
-## Ustawienia
-
-Każdy moduł ma własne okno ustawień. Otwierasz je przyciskiem **⚙ Ustawienia**
-w oknie modułu.
-
-### Sekcje ustawień
-
-**OPCJE**
-- Auto-pauza gdy gra nieaktywna — zatrzymuje makro jeśli gra nie jest aktywna w tle
-- Dźwięk przy znalezieniu Boba — sygnał dźwiękowy (3 piknięcia)
-
-**ZAAWANSOWANE**
-- Timingowe parametry (Sleep w ms) — sterują szybkością sekwencji
-- Klawisz wyzwalacza (Manual Bob, Critical Glove) — fizyczne przypisanie klawisza
-
-**WEBHOOK STATYSTYK**
-- URL webhooka Discord — adres do którego wysyłane są statystyki
-- Cooldown webhooka (ms) — minimalna przerwa między wysyłkami
-- Co ile kliknięć wysyłać statystyki
-
-**DEBUGOWANIE** (chronione kodem PIN)
-- Krytyczne ustawienia — zmiana może uszkodzić działanie makra
-- Dostępne po wpisaniu kodu PIN (widoczny w panelu administratora)
+Konfiguracja zapisywana jest automatycznie w:
+`%AppData%\SBMM\`
 
 ---
 
-## Webhook Discord
+## Wersjonowanie
 
-Jeśli podasz URL webhooka Discord w ustawieniach, makro będzie automatycznie
-wysyłać statystyki na wybrany kanał. Wiadomości zawierają:
-- Liczbę kliknięć / pętli
-- Znalezione i szacowane Boby
-- Czas sesji i tempo
+Format wersji: `vDużyUpdate.Update.Bugfix`
 
----
-
-## Historia i dane łączne
-
-Przycisk **📋 Historia** otwiera log sesji. Każda zakończona sesja (Stop lub F8)
-jest zapisywana do pliku tekstowego w `%AppData%\BOB\`.
-
-Dane łączne (np. łączna liczba kliknięć od początku) są zachowywane między sesjami.
+Przykłady:
+- `v1.0.0` — pierwsza publiczna wersja
+- `v1.1.0` — nowy moduł / duża zmiana
+- `v1.1.1` — poprawka błędu
 
 ---
 
-## Pliki konfiguracyjne
+## Dla administratorów — konfiguracja serwera
 
-Wszystkie ustawienia zapisywane są automatycznie do plików INI w:
-`%AppData%\BOB\`
+### Wymagania
 
-| Plik | Moduł |
-|------|-------|
-| `portal_config.ini` | BOB (Portal) |
-| `trap_config.ini` | Trap / Brick Master |
-| `obby_config.ini` | Obby Mastery |
-| `replica_config.ini` | Replica Bob |
-| `manualbob_config.ini` | Manual Bob |
-| `critglove_config.ini` | Critical Glove |
-| `license.dat` | Klucz licencyjny |
-| `debug_code.dat` | Kod PIN do debugowania |
-| `sent_info.dat` | Flaga — info aktywacji wysłane |
+- Python 3.11+
+- Konto Replit (lub inny hosting)
+- Bot Discord
+- GitHub account
+
+### Konfiguracja Gist (przechowywanie licencji)
+
+Ponieważ repo jest **publiczne**, plik `licenses.json` przechowywany jest w prywatnym GitHub Gist:
+
+1. Wejdź na [gist.github.com](https://gist.github.com)
+2. Utwórz nowy Gist:
+   - Filename: `licenses.json`
+   - Zawartość: `{}`
+   - Typ: **Secret** (nie Public!)
+3. Skopiuj **Gist ID** z URL: `gist.github.com/nazwauzytkownika/`**`to_jest_gist_id`**
+4. Skopiuj **Raw URL** (przycisk "Raw") — to jest URL dla makra
+5. Otwórz `SlapBattlesMultiMacro.ahk` i podmień w linii 15:
+   ```
+   global jsonURL := "https://gist.githubusercontent.com/TWOJ_USERNAME/TWOJ_GIST_ID/raw/licenses.json"
+   ```
+   > Po zmianie URL zrób nowy Release (patrz niżej)
+
+### Replit Secrets
+
+W Replit dodaj następujące Secrets (nie wklejaj ich do kodu!):
+
+| Secret | Opis |
+|--------|------|
+| `DISCORD_TOKEN` | Token bota Discord |
+| `GIST_TOKEN` | GitHub token z zakresem `gist` (github.com/settings/tokens) |
+| `GIST_ID` | ID Gista z `licenses.json` |
+| `ADMIN_CHANNEL_ID` | ID kanału Discord do raportowania |
+
+Plik z przykładem: `SerwerIBot/.env.example`
+
+### Uruchomienie bota (Replit)
+
+```bash
+cd SerwerIBot
+pip install -r requirements.txt
+python main.py
+```
+
+Panel administracyjny dostępny na porcie `5000`.
+
+### Komendy bota Discord
+
+| Komenda | Opis |
+|---------|------|
+| `.generate` | Generuje nowy klucz licencyjny |
+| `.ban KLUCZ` | Blokuje klucz |
+| `.unban KLUCZ` | Odblokowuje klucz |
+| `.reset KLUCZ` | Resetuje HWID klucza |
+| `.assign KLUCZ HWID` | Ręcznie przypisuje HWID |
+| `.info KLUCZ` | Wyświetla informacje o kluczu |
+| `.list` | Lista wszystkich kluczy |
+| `.note KLUCZ tekst` | Dodaje notatkę (np. nick gracza) |
+| `.clearnote KLUCZ` | Usuwa notatkę |
+| `.debugcode KLUCZ` | Pokazuje kod PIN debugowania |
+| `.delete KLUCZ` | Usuwa klucz |
+
+### Tworzenie nowego Release (exe)
+
+Release tworzony jest automatycznie przez GitHub Actions przy każdym nowym tagu:
+
+```bash
+git tag v1.4.1
+git push origin v1.4.1
+```
+
+GitHub Actions automatycznie:
+1. Kompiluje `SlapBattlesMultiMacro.ahk` → `SlapBattlesMultiMacro.exe`
+2. Tworzy Release z tym plikiem
 
 ---
 
-## Rozwiązywanie problemów
+## Struktura repo
 
-**Makro się nie uruchamia**
-- Sprawdź czy AutoHotkey v2.0 jest zainstalowany
-- Uruchom plik `.ahk` prawym przyciskiem → "Run as administrator"
+```
+/
+├── SlapBattlesMultiMacro.ahk   ← główny plik makra
+├── .gitignore
+├── README.md
+├── .github/
+│   └── workflows/
+│       └── release.yml         ← auto-kompilacja i release
+└── SerwerIBot/
+    ├── main.py                 ← bot Discord + panel web
+    ├── panel.html              ← panel administracyjny
+    ├── requirements.txt
+    └── .env.example            ← przykład zmiennych środowiskowych
+```
 
-**Makro się zatrzymuje samo**
-- Włączona opcja "Auto-pauza" — gra musi być aktywna w tle
-- Wyłącz Auto-pauzę w Ustawieniach jeśli grasz na innym oknie
-
-**Nieprawidłowy klucz / HWID niezaakceptowany**
-- Skontaktuj się z administratorem
-- Nie zmieniaj sprzętu komputerowego po aktywacji
-
-**Okno wyboru klawisza zawiesza makro**
-- Naciśnij Esc aby anulować
-- Okno automatycznie zamknie się po 10 sekundach
+> `licenses.json` **NIE jest w repo** — przechowywany w prywatnym GitHub Gist.

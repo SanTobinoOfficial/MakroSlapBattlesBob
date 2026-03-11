@@ -1,0 +1,69 @@
+name: Build & Release
+
+# Trigger: push taga w formacie v1.2.3
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    name: Kompilacja AHK → EXE i tworzenie release
+    runs-on: windows-latest
+
+    steps:
+      # 1. Pobierz kod
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Zainstaluj AutoHotkey v2 (cicho, bez interakcji)
+      - name: Zainstaluj AutoHotkey v2
+        shell: pwsh
+        run: |
+          $url = "https://www.autohotkey.com/download/ahk-v2.exe"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\ahk-setup.exe"
+          Start-Process -FilePath "$env:TEMP\ahk-setup.exe" -ArgumentList "/S" -Wait
+          Start-Sleep -Seconds 3
+
+      # 3. Skompiluj SlapBattlesMultiMacro.ahk → .exe
+      - name: Kompiluj makro
+        shell: pwsh
+        run: |
+          $ahk2exe = "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe"
+          if (!(Test-Path $ahk2exe)) {
+            $ahk2exe = "C:\Program Files\AutoHotkey\v2\Ahk2Exe.exe"
+          }
+          Write-Host "Używam kompilatora: $ahk2exe"
+          & $ahk2exe /in "SlapBattlesMultiMacro.ahk" /out "SlapBattlesMultiMacro.exe" /compress 2
+          if (!(Test-Path "SlapBattlesMultiMacro.exe")) {
+            Write-Error "Kompilacja nie powiodła się — plik exe nie istnieje!"
+            exit 1
+          }
+          Write-Host "Kompilacja zakończona pomyślnie."
+
+      # 4. Utwórz GitHub Release z plikiem exe
+      - name: Utwórz Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Slap Battles Multi Macro ${{ github.ref_name }}"
+          body: |
+            ## Slap Battles Multi Macro ${{ github.ref_name }}
+
+            ### Instalacja
+            1. Pobierz `SlapBattlesMultiMacro.exe`
+            2. Uruchom plik
+            3. Wpisz klucz licencyjny (otrzymasz od administratora)
+            4. Poczekaj na aktywację HWID
+            5. Uruchom ponownie i wybierz moduł
+
+            ### Wymagania
+            - Windows 10 / 11
+            - Gra uruchomiona przed startem makra
+
+            > Plik exe zawiera wbudowane środowisko AutoHotkey — nie wymaga instalacji AHK.
+          files: SlapBattlesMultiMacro.exe
+          generate_release_notes: false
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
