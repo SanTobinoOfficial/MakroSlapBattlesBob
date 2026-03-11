@@ -75,15 +75,14 @@ jobs:
       - name: Kompiluj makro
         shell: pwsh
         run: |
-          $compiler = @(
-            "C:\Program Files\AutoHotkey\Compiler\Ahk2Exe.exe",
-            "C:\Program Files\AutoHotkey\v2\Compiler\Ahk2Exe.exe",
-            "C:\ProgramData\chocolatey\lib\autohotkey\tools\Compiler\Ahk2Exe.exe"
-          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+          $compiler = Get-ChildItem "C:\Program Files\AutoHotkey\" -Recurse -Filter "Ahk2Exe.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          if (-not $compiler) {
+            $compiler = Get-ChildItem "C:\ProgramData\chocolatey\" -Recurse -Filter "Ahk2Exe.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+          }
 
           if (-not $compiler) {
             Write-Error "Nie znaleziono Ahk2Exe.exe!"
-            Get-ChildItem "C:\Program Files\AutoHotkey\" -Recurse -Filter "*.exe" | Select-Object FullName
+            Get-ChildItem "C:\Program Files\AutoHotkey\" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Select-Object FullName
             exit 1
           }
 
