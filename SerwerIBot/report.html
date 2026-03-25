@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SBMM — Zgłoś błąd</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #04050A;
+    --surface: #0C0E18;
+    --card:    #111525;
+    --border:  #1E2340;
+    --accent:  #6366F1;
+    --accent2: #818CF8;
+    --green:   #34D399;
+    --red:     #F87171;
+    --yellow:  #FBBF24;
+    --text:    #F1F5F9;
+    --muted:   #64748B;
+    --dim:     #334155;
+    --mono:    'JetBrains Mono', monospace;
+    --sans:    'Syne', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);
+    background-size: 40px 40px;
+    opacity: 0.3; pointer-events: none; z-index: 0;
+  }
+  .wrap { position: relative; z-index: 1; width: 100%; max-width: 520px; }
+  .logo { font-size: 20px; font-weight: 800; text-align: center; margin-bottom: 32px; }
+  .logo span { color: var(--accent); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px; }
+  h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .sub { font-size: 12px; color: var(--muted); margin-bottom: 28px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  input, select, textarea {
+    width: 100%; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; font-family: var(--mono); font-size: 12px;
+    color: var(--text); outline: none; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input::placeholder, textarea::placeholder { color: var(--dim); }
+  select option { background: var(--surface); }
+  textarea { resize: vertical; min-height: 100px; }
+  .btn {
+    width: 100%; padding: 12px; border-radius: 10px; font-family: var(--sans);
+    font-size: 14px; font-weight: 700; cursor: pointer; border: none;
+    background: var(--accent); color: #fff; transition: all 0.15s; margin-top: 8px;
+  }
+  .btn:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .success-box { display: none; text-align: center; padding: 32px 20px; }
+  .success-icon { font-size: 48px; margin-bottom: 16px; }
+  .success-title { font-size: 18px; font-weight: 700; color: var(--green); margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--muted); }
+  .error-msg { color: var(--red); font-size: 12px; margin-top: 10px; text-align: center; display: none; }
+  .required { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">⚔ <span>SBMM</span> — Zgłoś błąd</div>
+  <div class="card">
+    <div id="form-view">
+      <h2>Zgłoszenie błędu</h2>
+      <p class="sub">Wypełnij formularz — dane trafią bezpośrednio do admina.</p>
+      <div class="field">
+        <label>Klucz licencyjny <span class="required">*</span></label>
+        <input id="f-key" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" maxlength="19">
+      </div>
+      <div class="field">
+        <label>Moduł</label>
+        <select id="f-module">
+          <option value="">— wybierz —</option>
+          <option value="portal">BOB Portal</option>
+          <option value="trap">Trap / Brick Master</option>
+          <option value="obby">Obby Mastery</option>
+          <option value="replica">Replica Bob</option>
+          <option value="manualbob">Manual Bob</option>
+          <option value="critglove">Critical Glove</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Opis błędu <span class="required">*</span></label>
+        <textarea id="f-error" placeholder="Opisz co się dzieje, kiedy pojawia się błąd, jakie komunikaty widzisz..."></textarea>
+      </div>
+      <div class="field">
+        <label>Wersja makra</label>
+        <input id="f-version" type="text" placeholder="np. v1.4.2">
+      </div>
+      <div class="field">
+        <label>Kod debug (opcjonalnie)</label>
+        <input id="f-debug" type="text" placeholder="XXXX-XXXX" maxlength="9">
+      </div>
+      <button class="btn" onclick="submitReport()">Wyślij zgłoszenie</button>
+      <p class="error-msg" id="err-msg"></p>
+    </div>
+    <div class="success-box" id="success-view">
+      <div class="success-icon">✓</div>
+      <div class="success-title">Zgłoszenie wysłane!</div>
+      <p class="success-sub">Admin otrzymał Twoje zgłoszenie i skontaktuje się przez Discord.</p>
+    </div>
+  </div>
+</div>
+<script>
+async function submitReport() {
+  const key   = document.getElementById('f-key').value.trim();
+  const error = document.getElementById('f-error').value.trim();
+  const errEl = document.getElementById('err-msg');
+
+  if (!key || !error) {
+    errEl.textContent = 'Klucz licencyjny i opis błędu są wymagane.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = document.querySelector('.btn');
+  btn.disabled = true;
+  btn.textContent = 'Wysyłanie...';
+  errEl.style.display = 'none';
+
+  try {
+    const r = await fetch('/api/report', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        key:        key,
+        module:     document.getElementById('f-module').value,
+        error:      error,
+        version:    document.getElementById('f-version').value.trim(),
+        debug_code: document.getElementById('f-debug').value.trim(),
+      })
+    });
+    if (!r.ok) throw new Error(await r.text());
+    document.getElementById('form-view').style.display = 'none';
+    document.getElementById('success-view').style.display = 'block';
+  } catch(e) {
+    errEl.textContent = 'Błąd wysyłania: ' + e.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Wyślij zgłoszenie';
+  }
+}
+</script>
+</body>
+</html>

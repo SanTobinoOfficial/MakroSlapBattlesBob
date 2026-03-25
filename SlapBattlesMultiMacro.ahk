@@ -84,6 +84,8 @@ global P_BOB_DENOM   := 7500
 global debugCodeFile := A_AppData "\SBMM\debug_code.dat"
 global sentInfoFile  := A_AppData "\SBMM\sent_info.dat"   ; flaga — info wysłane raz
 global debugCode     := ""
+global globalIniFile := A_AppData "\SBMM\global_config.ini"
+global reportURL     := ""
 
 ; Portal coords found dynamically at runtime
 global portalX := 956, portalY := 982
@@ -453,13 +455,54 @@ InitDebugCode() {
 
 
 ; ══════════════════════════════════════════════
+; GLOBAL CONFIG (URL panelu)
+; ══════════════════════════════════════════════
+LoadGlobalConfig() {
+    global globalIniFile, reportURL
+    if !FileExist(globalIniFile)
+        IniWrite "", globalIniFile, "Panel", "ReportURL"
+    reportURL := IniRead(globalIniFile, "Panel", "ReportURL", "")
+}
+LoadGlobalConfig()
+
+; ══════════════════════════════════════════════
+; DIAGNOSTYKA
+; ══════════════════════════════════════════════
+SendDiagnostics(module := "", extraInfo := "") {
+    global key, hwid, debugCode, APP_VERSION, reportURL
+    if (reportURL = "") {
+        MsgBox "URL panelu nie jest skonfigurowany.`nUstaw go w sekcji debugowania.", "Diagnostyka", 48
+        return
+    }
+    info := extraInfo = "" ? "Ręczne wysłanie diagnostyki" : extraInfo
+    body := '{"key":"' key '","hwid":"' hwid '","version":"' APP_VERSION '"'
+        . ',"module":"' module '","debug_code":"' debugCode '"'
+        . ',"error":"' StrReplace(StrReplace(info, '\', '\\'), '"', '\"') '"'
+        . ',"system":"' A_OSVersion '"}'
+    try {
+        h := ComObject("WinHttp.WinHttpRequest.5.1")
+        h.Open("POST", reportURL "/api/report", false)
+        h.SetRequestHeader("Content-Type", "application/json")
+        h.Send(body)
+        if (h.Status = 200)
+            MsgBox "Diagnostyka wysłana pomyślnie.", "Diagnostyka", 64
+        else
+            MsgBox "Błąd serwera: " h.Status, "Diagnostyka", 48
+    } catch as e {
+        MsgBox "Błąd połączenia: " e.Message, "Diagnostyka", 16
+    }
+}
+
+; ══════════════════════════════════════════════
 ; TRAY
 ; ══════════════════════════════════════════════
 A_TrayMenu.Delete()
-A_TrayMenu.Add("Pokaż okno",   (*) => gui1.Show())
-A_TrayMenu.Add("Start / Stop", (*) => ToggleMacro())
+A_TrayMenu.Add("Pokaż okno",        (*) => gui1.Show())
+A_TrayMenu.Add("Start / Stop",      (*) => ToggleMacro())
 A_TrayMenu.Add()
-A_TrayMenu.Add("Wyjście",      (*) => SafeExit())
+A_TrayMenu.Add("Wyślij diagnostykę", (*) => SendDiagnostics(activeModule))
+A_TrayMenu.Add()
+A_TrayMenu.Add("Wyjście",           (*) => SafeExit())
 TraySetIcon("shell32.dll", 24)
 A_IconTip := APP_NAME
 
@@ -1201,24 +1244,37 @@ OpenPortalDebug(parentGui, enteredPin) {
     gdP.AddText("xm y+4 w" LW, "Mianownik szansy (1/X) [7500]:")
     dbBobDenom := gdP.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", String(P_BOB_DENOM))
 
+    ; URL panelu
+    gdP.SetFont("s7 Bold cF87171", "Segoe UI")
+    gdP.AddText("xm y+8 w340", "  Diagnostyka")
+    gdP.SetFont("s8 c64748B", "Segoe UI")
+    gdP.AddText("xm y+4 w" LW, "URL panelu (np. https://…replit.app):")
+    dbRepI := gdP.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", reportURL)
+
     gdP.SetFont("s9 Bold cF87171", "Segoe UI")
     svDbP := gdP.AddButton("xm y+12 w340 h28", "Zapisz ustawienia debugowania")
     svDbP.OnEvent("Click", (*) => SavePortalDebug(
         dbJsonI.Value, dbWHI.Value, dbWHCD.Value,
         dbBBmin.Value, dbBRmax.Value, dbRRmin.Value, dbRBmax.Value,
-        dbScanHits.Value, dbBobDenom.Value
+        dbScanHits.Value, dbBobDenom.Value, dbRepI.Value
     ))
+    gdP.SetFont("s8 c6366F1", "Segoe UI")
+    gdP.AddButton("xm y+5 w340 h24", "Wyślij diagnostykę do panelu").OnEvent("Click", (*) => SendDiagnostics("portal"))
     gdP.SetFont("s8 c64748B", "Segoe UI")
     gdP.AddButton("xm y+5 w340 h24", "Zamknij").OnEvent("Click", (*) => gdP.Destroy())
     gdP.Show("w372")
 }
 
-SavePortalDebug(newJson, newWH, newWHCD, newBBmin, newBRmax, newRRmin, newRBmax, newScanHits, newBobDenom) {
-    global jsonURL, webhookHWID, P_IniFile, P_webhook, P_whCooldown, P_BOB_DENOM
+SavePortalDebug(newJson, newWH, newWHCD, newBBmin, newBRmax, newRRmin, newRBmax, newScanHits, newBobDenom, newRepURL := "") {
+    global jsonURL, webhookHWID, P_IniFile, P_webhook, P_whCooldown, P_BOB_DENOM, reportURL, globalIniFile
     jsonURL      := newJson
     webhookHWID  := newWH
     P_whCooldown := SafeNum(newWHCD, 3000)
     P_BOB_DENOM  := SafeNum(newBobDenom, 7500)
+    if (newRepURL != "") {
+        reportURL := RTrim(newRepURL, "/")
+        IniWrite reportURL, globalIniFile, "Panel", "ReportURL"
+    }
     IniWrite newWHCD, P_IniFile, "Webhook", "Cooldown"
     IniWrite newBBmin,    P_IniFile, "Debug",   "BlueB_min"
     IniWrite newBRmax,    P_IniFile, "Debug",   "BlueRG_max"
@@ -1538,18 +1594,30 @@ OpenTrapDebug(parentGui, enteredPin) {
 
     ; Webhook — przeniesiony do ustawien glownych
 
+    gdT.SetFont("s7 Bold cF87171", "Segoe UI")
+    gdT.AddText("xm y+8 w340", "  Diagnostyka")
+    gdT.SetFont("s8 c64748B", "Segoe UI")
+    gdT.AddText("xm y+4 w" LW, "URL panelu (np. https://…replit.app):")
+    dbRepT := gdT.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", reportURL)
+
     gdT.SetFont("s9 Bold cF87171", "Segoe UI")
     svDbT := gdT.AddButton("xm y+14 w340 h28", "Zapisz ustawienia debugowania")
-    svDbT.OnEvent("Click", (*) => SaveTrapDebug(dbJsonT.Value, dbWHT.Value))
+    svDbT.OnEvent("Click", (*) => SaveTrapDebug(dbJsonT.Value, dbWHT.Value, dbRepT.Value))
+    gdT.SetFont("s8 c6366F1", "Segoe UI")
+    gdT.AddButton("xm y+5 w340 h24", "Wyślij diagnostykę do panelu").OnEvent("Click", (*) => SendDiagnostics("trap"))
     gdT.SetFont("s8 c64748B", "Segoe UI")
     gdT.AddButton("xm y+5 w340 h24", "Zamknij").OnEvent("Click", (*) => gdT.Destroy())
     gdT.Show("w372")
 }
 
-SaveTrapDebug(newJson, newWH) {
-    global jsonURL, webhookHWID
+SaveTrapDebug(newJson, newWH, newRepURL := "") {
+    global jsonURL, webhookHWID, reportURL, globalIniFile
     jsonURL     := newJson
     webhookHWID := newWH
+    if (newRepURL != "") {
+        reportURL := RTrim(newRepURL, "/")
+        IniWrite reportURL, globalIniFile, "Panel", "ReportURL"
+    }
     MsgBox "Ustawienia debugowania zapisane.", "Debugowanie", 64
 }
 
@@ -2121,18 +2189,30 @@ OpenObbyDebug(parentGui, enteredPin) {
 
     ; Webhook — przeniesiony do ustawien glownych
 
+    gdO.SetFont("s7 Bold cF87171", "Segoe UI")
+    gdO.AddText("xm y+8 w340", "  Diagnostyka")
+    gdO.SetFont("s8 c64748B", "Segoe UI")
+    gdO.AddText("xm y+4 w" LW, "URL panelu (np. https://…replit.app):")
+    dbRepO := gdO.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", reportURL)
+
     gdO.SetFont("s9 Bold cF87171", "Segoe UI")
     svDbO := gdO.AddButton("xm y+14 w340 h28", "Zapisz ustawienia debugowania")
-    svDbO.OnEvent("Click", (*) => SaveObbyDebug(dbJsonO.Value, dbWHO.Value))
+    svDbO.OnEvent("Click", (*) => SaveObbyDebug(dbJsonO.Value, dbWHO.Value, dbRepO.Value))
+    gdO.SetFont("s8 c6366F1", "Segoe UI")
+    gdO.AddButton("xm y+5 w340 h24", "Wyślij diagnostykę do panelu").OnEvent("Click", (*) => SendDiagnostics("obby"))
     gdO.SetFont("s8 c64748B", "Segoe UI")
     gdO.AddButton("xm y+5 w340 h24", "Zamknij").OnEvent("Click", (*) => gdO.Destroy())
     gdO.Show("w372")
 }
 
-SaveObbyDebug(newJson, newWH) {
-    global jsonURL, webhookHWID
+SaveObbyDebug(newJson, newWH, newRepURL := "") {
+    global jsonURL, webhookHWID, reportURL, globalIniFile
     jsonURL     := newJson
     webhookHWID := newWH
+    if (newRepURL != "") {
+        reportURL := RTrim(newRepURL, "/")
+        IniWrite reportURL, globalIniFile, "Panel", "ReportURL"
+    }
     MsgBox "Ustawienia debugowania zapisane.", "Debugowanie", 64
 }
 
@@ -2533,20 +2613,32 @@ OpenReplicaDebug(parentGui, enteredPin) {
     gdR.AddText("xm y+4 w" LW, "Mianownik szansy (1/X) [7500]:")
     dbBobDenomR := gdR.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", String(R_BOB_DENOM))
 
+    gdR.SetFont("s7 Bold cF87171", "Segoe UI")
+    gdR.AddText("xm y+8 w340", "  Diagnostyka")
+    gdR.SetFont("s8 c64748B", "Segoe UI")
+    gdR.AddText("xm y+4 w" LW, "URL panelu (np. https://…replit.app):")
+    dbRepR := gdR.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", reportURL)
+
     gdR.SetFont("s9 Bold cF87171", "Segoe UI")
     svDbR := gdR.AddButton("xm y+14 w340 h28", "Zapisz ustawienia debugowania")
-    svDbR.OnEvent("Click", (*) => SaveReplicaDebug(dbJsonR.Value, dbWHR.Value, dbBobDenomR.Value))
+    svDbR.OnEvent("Click", (*) => SaveReplicaDebug(dbJsonR.Value, dbWHR.Value, dbBobDenomR.Value, dbRepR.Value))
+    gdR.SetFont("s8 c6366F1", "Segoe UI")
+    gdR.AddButton("xm y+5 w340 h24", "Wyślij diagnostykę do panelu").OnEvent("Click", (*) => SendDiagnostics("replica"))
     gdR.SetFont("s8 c64748B", "Segoe UI")
     gdR.AddButton("xm y+5 w340 h24", "Zamknij").OnEvent("Click", (*) => gdR.Destroy())
     gdR.Show("w372")
 }
 
-SaveReplicaDebug(newJson, newWH, newBobDenom) {
-    global jsonURL, webhookHWID, R_IniFile, R_BOB_DENOM
+SaveReplicaDebug(newJson, newWH, newBobDenom, newRepURL := "") {
+    global jsonURL, webhookHWID, R_IniFile, R_BOB_DENOM, reportURL, globalIniFile
     jsonURL     := newJson
     webhookHWID := newWH
     R_BOB_DENOM := SafeNum(newBobDenom, 7500)
     IniWrite newBobDenom, R_IniFile, "Debug", "BobDenom"
+    if (newRepURL != "") {
+        reportURL := RTrim(newRepURL, "/")
+        IniWrite reportURL, globalIniFile, "Panel", "ReportURL"
+    }
     MsgBox "Ustawienia debugowania zapisane.", "Debugowanie", 64
 }
 
@@ -2958,20 +3050,32 @@ OpenManualBobDebug(parentGui, enteredPin) {
     gdM.AddText("xm y+4 w" LW, "Mianownik szansy (1/X) [7500]:")
     dbBobDenomM := gdM.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", String(MB_BOB_DENOM))
 
+    gdM.SetFont("s7 Bold cF87171", "Segoe UI")
+    gdM.AddText("xm y+8 w340", "  Diagnostyka")
+    gdM.SetFont("s8 c64748B", "Segoe UI")
+    gdM.AddText("xm y+4 w" LW, "URL panelu (np. https://…replit.app):")
+    dbRepM := gdM.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", reportURL)
+
     gdM.SetFont("s9 Bold cF87171", "Segoe UI")
     svDbM := gdM.AddButton("xm y+14 w340 h28", "Zapisz ustawienia debugowania")
-    svDbM.OnEvent("Click", (*) => SaveManualBobDebug(dbJsonM.Value, dbWHM.Value, dbBobDenomM.Value))
+    svDbM.OnEvent("Click", (*) => SaveManualBobDebug(dbJsonM.Value, dbWHM.Value, dbBobDenomM.Value, dbRepM.Value))
+    gdM.SetFont("s8 c6366F1", "Segoe UI")
+    gdM.AddButton("xm y+5 w340 h24", "Wyślij diagnostykę do panelu").OnEvent("Click", (*) => SendDiagnostics("manualbob"))
     gdM.SetFont("s8 c64748B", "Segoe UI")
     gdM.AddButton("xm y+5 w340 h24", "Zamknij").OnEvent("Click", (*) => gdM.Destroy())
     gdM.Show("w372")
 }
 
-SaveManualBobDebug(newJson, newWH, newBobDenom) {
-    global jsonURL, webhookHWID, MB_IniFile, MB_BOB_DENOM
+SaveManualBobDebug(newJson, newWH, newBobDenom, newRepURL := "") {
+    global jsonURL, webhookHWID, MB_IniFile, MB_BOB_DENOM, reportURL, globalIniFile
     jsonURL      := newJson
     webhookHWID  := newWH
     MB_BOB_DENOM := SafeNum(newBobDenom, 7500)
     IniWrite newBobDenom, MB_IniFile, "Debug", "BobDenom"
+    if (newRepURL != "") {
+        reportURL := RTrim(newRepURL, "/")
+        IniWrite reportURL, globalIniFile, "Panel", "ReportURL"
+    }
     MsgBox "Ustawienia debugowania zapisane.", "Debugowanie", 64
 }
 
@@ -3276,18 +3380,30 @@ OpenCritGloveDebug(parentGui, enteredPin) {
     gdC.AddText("xm y+4 w" LW, "Webhook HWID (rejestracja):")
     dbWHC := gdC.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", webhookHWID)
 
+    gdC.SetFont("s7 Bold cF87171", "Segoe UI")
+    gdC.AddText("xm y+8 w340", "  Diagnostyka")
+    gdC.SetFont("s8 c64748B", "Segoe UI")
+    gdC.AddText("xm y+4 w" LW, "URL panelu (np. https://…replit.app):")
+    dbRepC := gdC.AddEdit("x+8 yp w" VW " h20 Background1C2030 cF1F5F9 -E0x200", reportURL)
+
     gdC.SetFont("s9 Bold cF87171", "Segoe UI")
     svDbC := gdC.AddButton("xm y+14 w340 h28", "Zapisz ustawienia debugowania")
-    svDbC.OnEvent("Click", (*) => SaveCritGloveDebug(dbJsonC.Value, dbWHC.Value))
+    svDbC.OnEvent("Click", (*) => SaveCritGloveDebug(dbJsonC.Value, dbWHC.Value, dbRepC.Value))
+    gdC.SetFont("s8 c6366F1", "Segoe UI")
+    gdC.AddButton("xm y+5 w340 h24", "Wyślij diagnostykę do panelu").OnEvent("Click", (*) => SendDiagnostics("critglove"))
     gdC.SetFont("s8 c64748B", "Segoe UI")
     gdC.AddButton("xm y+5 w340 h24", "Zamknij").OnEvent("Click", (*) => gdC.Destroy())
     gdC.Show("w372")
 }
 
-SaveCritGloveDebug(newJson, newWH) {
-    global jsonURL, webhookHWID
+SaveCritGloveDebug(newJson, newWH, newRepURL := "") {
+    global jsonURL, webhookHWID, reportURL, globalIniFile
     jsonURL     := newJson
     webhookHWID := newWH
+    if (newRepURL != "") {
+        reportURL := RTrim(newRepURL, "/")
+        IniWrite reportURL, globalIniFile, "Panel", "ReportURL"
+    }
     MsgBox "Ustawienia debugowania zapisane.", "Debugowanie", 64
 }
 
