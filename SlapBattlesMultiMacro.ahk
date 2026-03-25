@@ -468,6 +468,24 @@ LoadGlobalConfig()
 ; ══════════════════════════════════════════════
 ; DIAGNOSTYKA
 ; ══════════════════════════════════════════════
+SendUsageData(module, durationS, actions, extraFields := "") {
+    global key, hwid, debugCode, APP_VERSION, reportURL
+    if (reportURL = "")
+        return
+    body := '{"key":"' key '","hwid":"' hwid '","version":"' APP_VERSION '"'
+        . ',"module":"' module '","duration_s":' durationS ',"actions":' actions
+        . ',"os":"' A_OSVersion '"'
+        . (extraFields != "" ? "," extraFields : "")
+        . "}"
+    try {
+        h := ComObject("WinHttp.WinHttpRequest.5.1")
+        h.Open("POST", reportURL "/api/usage", false)
+        h.SetRequestHeader("Content-Type", "application/json")
+        h.Send(body)
+    }
+    ; Cicha telemetria — nie pokazujemy MsgBox przy błędzie
+}
+
 SendDiagnostics(module := "", extraInfo := "") {
     global key, hwid, debugCode, APP_VERSION, reportURL
     if (reportURL = "") {
@@ -774,6 +792,20 @@ StopMacro(*) {
     UpdateTrayTip()
     SaveHistory()
     SaveTotalData()
+    ; Wyślij dane użytkowania
+    dur := Max(0, (A_TickCount - sessionStart) // 1000)
+    if (activeModule = "portal")
+        SetTimer(() => SendUsageData("portal", dur, P_loopCount, '"bob_hits":' P_bobHits), -1)
+    else if (activeModule = "trap")
+        SetTimer(() => SendUsageData("trap", dur, T_brickCount), -1)
+    else if (activeModule = "obby")
+        SetTimer(() => SendUsageData("obby", dur, O_partCount), -1)
+    else if (activeModule = "replica")
+        SetTimer(() => SendUsageData("replica", dur, R_clickCount, '"bob_hits":' R_bobHits), -1)
+    else if (activeModule = "manualbob")
+        SetTimer(() => SendUsageData("manualbob", dur, MB_clickCount, '"bob_hits":' MB_bobHits), -1)
+    else if (activeModule = "critglove")
+        SetTimer(() => SendUsageData("critglove", dur, CG_clickCount), -1)
 }
 
 UpdateStatus(txt, col) {

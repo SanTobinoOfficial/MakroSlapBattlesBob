@@ -25,6 +25,7 @@ bot = commands.Bot(command_prefix='.', intents=intents)
 
 activity_log = []
 bug_reports: list = []
+usage_log: list = []
 ws_clients: set = set()
 _report_counter = 0
 
@@ -425,6 +426,80 @@ async def handle_api_action(request):
         return web.json_response({"error": str(e)}, status=500)
 
 
+async def handle_api_usage(request):
+    try:
+        body       = await request.json()
+        key        = body.get("key", "").strip()
+        module     = body.get("module", "").strip()
+        duration_s = int(body.get("duration_s", 0))
+        actions    = int(body.get("actions", 0))
+        version    = body.get("version", "").strip()
+        hwid       = body.get("hwid", "").strip()
+        os_ver     = body.get("os", "").strip()[:100]
+        extras     = {k: body[k] for k in ("bob_hits",) if k in body}
+
+        if not key or not module:
+            return web.json_response({"error": "Wymagane: key, module"}, status=400)
+
+        entry = {
+            "time":       datetime.now().strftime("%H:%M:%S"),
+            "date":       datetime.now().strftime("%Y-%m-%d"),
+            "key":        key,
+            "hwid":       hwid,
+            "version":    version,
+            "module":     module,
+            "duration_s": duration_s,
+            "actions":    actions,
+            "os":         os_ver,
+            **extras,
+        }
+        usage_log.insert(0, entry)
+        if len(usage_log) > 1000:
+            usage_log.pop()
+        return web.json_response({"ok": True})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def handle_api_usage_get(request):
+    return web.json_response(usage_log)
+
+
+async def handle_api_usage_stats(request):
+    from collections import defaultdict
+    module_counts    = defaultdict(int)
+    module_duration  = defaultdict(int)
+    module_actions   = defaultdict(int)
+    version_counts   = defaultdict(int)
+    unique_keys      = set()
+    for e in usage_log:
+        m = e.get("module", "unknown")
+        module_counts[m]   += 1
+        module_duration[m] += e.get("duration_s", 0)
+        module_actions[m]  += e.get("actions", 0)
+        if e.get("version"):
+            version_counts[e["version"]] += 1
+        if e.get("key"):
+            unique_keys.add(e["key"])
+    return web.json_response({
+        "total_sessions": len(usage_log),
+        "unique_users":   len(unique_keys),
+        "by_module": [
+            {
+                "module":      m,
+                "sessions":    module_counts[m],
+                "total_duration_s": module_duration[m],
+                "total_actions":    module_actions[m],
+            }
+            for m in sorted(module_counts, key=lambda x: module_counts[x], reverse=True)
+        ],
+        "by_version": [
+            {"version": v, "count": version_counts[v]}
+            for v in sorted(version_counts, key=lambda x: version_counts[x], reverse=True)
+        ],
+    })
+
+
 async def handle_report_page(request):
     try:
         with open("report.html", "r", encoding="utf-8") as f:
@@ -531,6 +606,9 @@ async def start_webserver():
     app.router.add_post("/api/report",         handle_api_report)
     app.router.add_get("/api/reports",         handle_api_reports)
     app.router.add_post("/api/report-action",  handle_api_report_action)
+    app.router.add_post("/api/usage",          handle_api_usage)
+    app.router.add_get("/api/usage",           handle_api_usage_get)
+    app.router.add_get("/api/usage/stats",     handle_api_usage_stats)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", 5000)

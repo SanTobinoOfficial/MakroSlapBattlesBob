@@ -1,7 +1,7 @@
 # Warunki Korzystania z Makra
 
-**Slap Battles Multi Macro** (`SlapBattlesMultiMacro.exe`)
-Ostatnia aktualizacja: 11 marca 2026 r.
+**Slap Battles Multi Macro** (`SlapBattlesMultiMacro.ahk`)
+Ostatnia aktualizacja: 25 marca 2026 r.
 
 ---
 
@@ -9,17 +9,18 @@ Ostatnia aktualizacja: 11 marca 2026 r.
 
 | Pojęcie | Znaczenie |
 |---------|-----------|
-| **Makro** | Program `SlapBattlesMultiMacro.exe` automatyzujący czynności w grze Slap Battles na platformie Roblox |
+| **Makro** | Skrypt `SlapBattlesMultiMacro.ahk` automatyzujący czynności w grze Slap Battles na platformie Roblox |
 | **Użytkownik** | Każda osoba uruchamiająca Makro |
 | **Administrator** | Właściciel projektu BOB lub upoważniona przez niego osoba |
 | **Klucz licencyjny** | Unikalny ciąg w formacie `XXXX-XXXX-XXXX-XXXX` uprawniający do korzystania z Makra |
 | **HWID** | Identyfikator sprzętowy komputera Użytkownika |
+| **Dane użytkowania** | Anonimowe dane sesji wysyłane automatycznie po zatrzymaniu Makra |
 
 ---
 
 ## 2. Akceptacja Warunków
 
-2.1. Przy pierwszym uruchomieniu Makro wyświetla okno akceptacji. Kontynuowanie bez akceptacji jest niemożliwe.
+2.1. Przy pierwszym uruchomieniu Makro wyświetla okno akceptacji wraz z linkiem do pełnych Warunków. Kontynuowanie bez akceptacji jest niemożliwe.
 
 2.2. Brak zgody z którymkolwiek punktem zobowiązuje do natychmiastowego usunięcia Makra.
 
@@ -35,7 +36,7 @@ Ostatnia aktualizacja: 11 marca 2026 r.
 
 3.3. Użytkownikowi **nie wolno**:
 - sprzedawać, wynajmować ani przekazywać klucza licencyjnego,
-- dekompilować, modyfikować ani dystrybuować Makra,
+- modyfikować ani dystrybuować Makra bez zgody Administratora,
 - obchodzić systemu licencjonowania (emulacja HWID, edycja plików licencji),
 - uruchamiać Makra jednocześnie na więcej niż jednym urządzeniu.
 
@@ -61,21 +62,35 @@ Ostatnia aktualizacja: 11 marca 2026 r.
 
 ---
 
-## 6. Wyłączenie Gwarancji
+## 6. Zbieranie Danych Użytkowania
 
-6.1. Makro dostarczane jest **„tak jak jest" (as is)**, bez jakichkolwiek gwarancji.
+6.1. Użytkownik wyraża zgodę na automatyczne zbieranie i przesyłanie danych użytkowania do panelu Administratora po każdym zakończeniu sesji.
 
-6.2. Administrator nie gwarantuje ciągłości działania — Makro może przestać działać po aktualizacji gry lub systemu Windows.
+6.2. Zbierane dane obejmują: klucz licencyjny, HWID, wersję Makra, nazwę aktywnego modułu, czas trwania sesji (w sekundach), liczbę wykonanych akcji oraz wersję systemu Windows.
+
+6.3. Dane użytkowania służą wyłącznie do celów statystycznych i diagnostycznych (analiza popularności modułów, monitorowanie wersji, wykrywanie błędów).
+
+6.4. Dane użytkowania **nie są udostępniane stronom trzecim** i przechowywane są wyłącznie na serwerze Administratora.
+
+6.5. Wysyłanie danych następuje tylko wtedy, gdy Administrator skonfigurował URL panelu w ustawieniach Makra. Użytkownik może wyłączyć telemetrię, usuwając URL z ustawień debugowania (patrz Polityka Prywatności).
 
 ---
 
-## 7. Ograniczenie Odpowiedzialności
+## 7. Wyłączenie Gwarancji
+
+7.1. Makro dostarczane jest **„tak jak jest" (as is)**, bez jakichkolwiek gwarancji.
+
+7.2. Administrator nie gwarantuje ciągłości działania — Makro może przestać działać po aktualizacji gry lub systemu Windows.
+
+---
+
+## 8. Ograniczenie Odpowiedzialności
 
 W maksymalnym zakresie dopuszczonym przez prawo, łączna odpowiedzialność Administratora wynosi 0 PLN, jeżeli Makro było udostępniane bezpłatnie.
 
 ---
 
-## 8. Postanowienia Końcowe
+## 9. Postanowienia Końcowe
 
 Niniejsze Warunki podlegają prawu Rzeczypospolitej Polskiej. W razie pytań skontaktuj się z Administratorem przez serwer Discord projektu BOB.
 

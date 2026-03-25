@@ -173,6 +173,20 @@
   .toast.success { border-color: var(--green); }
   .toast.error   { border-color: var(--red); }
 
+  /* Usage */
+  .usage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; padding: 16px 20px; }
+  .usage-module { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .usage-module-name { font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--accent2); margin-bottom: 8px; }
+  .usage-module-stats { display: flex; flex-direction: column; gap: 3px; }
+  .usage-stat-row { display: flex; justify-content: space-between; font-size: 11px; }
+  .usage-stat-label { color: var(--muted); }
+  .usage-stat-val { font-family: var(--mono); color: var(--text); }
+  .usage-summary { display: flex; gap: 24px; padding: 12px 20px; border-bottom: 1px solid var(--border); font-size: 12px; flex-wrap: wrap; }
+  .usage-summary-item { display: flex; align-items: center; gap: 6px; color: var(--muted); }
+  .usage-summary-item strong { color: var(--text); font-family: var(--mono); }
+  .version-tags { display: flex; gap: 6px; flex-wrap: wrap; padding: 10px 20px; }
+  .version-tag { font-family: var(--mono); font-size: 10px; padding: 2px 8px; background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3); border-radius: 4px; color: var(--accent2); }
+
   /* Reports */
   .reports-section { margin-top: 24px; }
   .report-item { padding: 14px 20px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; transition: background 0.15s; }
@@ -216,6 +230,23 @@
     <div class="stat-card active"> <div class="stat-label">Aktywne</div>         <div class="stat-value" id="stat-active">—</div></div>
     <div class="stat-card pending"><div class="stat-label">Oczekujace</div>      <div class="stat-value" id="stat-pending">—</div></div>
     <div class="stat-card banned"> <div class="stat-label">Zbanowane</div>       <div class="stat-value" id="stat-banned">—</div></div>
+  </div>
+
+  <!-- Usage stats -->
+  <div class="panel" style="margin-bottom:24px">
+    <div class="panel-head">
+      Statystyki użycia
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="count" id="usage-sessions">0 sesji</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadUsage()">↻</button>
+      </div>
+    </div>
+    <div class="usage-summary" id="usage-summary">
+      <div class="usage-summary-item">Brak danych</div>
+    </div>
+    <div class="version-tags" id="version-tags" style="display:none"></div>
+    <div class="usage-grid" id="usage-grid">
+    </div>
   </div>
 
   <div class="main-grid">
@@ -567,6 +598,63 @@ async function action(act, key) {
   } catch(e) { toast(`Blad: ${e.message}`, 'error'); }
 }
 
+// ── Usage stats ───────────────────────────────────────────────────
+const MODULE_FULL = {
+  portal: 'BOB Portal', trap: 'Trap / Brick', obby: 'Obby Mastery',
+  replica: 'Replica Bob', manualbob: 'Manual Bob', critglove: 'Crit Glove'
+};
+
+function fmtDuration(s) {
+  if (s < 60)   return s + 's';
+  if (s < 3600) return Math.round(s/60) + 'min';
+  return (s/3600).toFixed(1) + 'h';
+}
+function fmtNum(n) {
+  if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+  if (n >= 1000)    return (n/1000).toFixed(1) + 'k';
+  return String(n);
+}
+
+async function loadUsage() {
+  try {
+    const s = await api('/api/usage/stats');
+    document.getElementById('usage-sessions').textContent = s.total_sessions + ' sesji';
+
+    const sumEl = document.getElementById('usage-summary');
+    sumEl.innerHTML = `
+      <div class="usage-summary-item">Sesje: <strong>${s.total_sessions}</strong></div>
+      <div class="usage-summary-item">Unikalni użytkownicy: <strong>${s.unique_users}</strong></div>
+    `;
+
+    const verEl = document.getElementById('version-tags');
+    if (s.by_version.length) {
+      verEl.style.display = 'flex';
+      verEl.innerHTML = s.by_version.map(v =>
+        `<span class="version-tag">${escHtml(v.version)} × ${v.count}</span>`
+      ).join('');
+    }
+
+    const grid = document.getElementById('usage-grid');
+    if (!s.by_module.length) {
+      grid.innerHTML = '<div style="padding:20px;color:var(--dim);font-size:12px">Brak danych użycia</div>';
+      return;
+    }
+    grid.innerHTML = s.by_module.map(m => {
+      const avgDur = m.sessions ? Math.round(m.total_duration_s / m.sessions) : 0;
+      const avgAct = m.sessions ? Math.round(m.total_actions / m.sessions) : 0;
+      return `<div class="usage-module">
+        <div class="usage-module-name">${MODULE_FULL[m.module] || m.module}</div>
+        <div class="usage-module-stats">
+          <div class="usage-stat-row"><span class="usage-stat-label">Sesje</span><span class="usage-stat-val">${m.sessions}</span></div>
+          <div class="usage-stat-row"><span class="usage-stat-label">Śr. czas</span><span class="usage-stat-val">${fmtDuration(avgDur)}</span></div>
+          <div class="usage-stat-row"><span class="usage-stat-label">Śr. akcji</span><span class="usage-stat-val">${fmtNum(avgAct)}</span></div>
+          <div class="usage-stat-row"><span class="usage-stat-label">Łącznie akcji</span><span class="usage-stat-val">${fmtNum(m.total_actions)}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch {}
+}
+
 // ── Reports ───────────────────────────────────────────────────────
 const MODULE_LABELS = {
   portal: 'BOB Portal', trap: 'Trap/Brick', obby: 'Obby Mastery',
@@ -657,9 +745,11 @@ function connectWS() {
 
 loadAll();
 loadReports();
+loadUsage();
 connectWS();
 setInterval(loadAll, 15000);
 setInterval(loadReports, 30000);
+setInterval(loadUsage, 60000);
 </script>
 </body>
 </html>
