@@ -24,7 +24,9 @@ intents.members = True          # wymagany do on_member_join (włącz w Dev Port
 bot = commands.Bot(command_prefix='.', intents=intents)
 
 activity_log = []
+bug_reports: list = []
 ws_clients: set = set()
+_report_counter = 0
 
 
 def log_activity(action, details):
@@ -40,11 +42,11 @@ def log_activity(action, details):
     asyncio.ensure_future(_broadcast_ws())
 
 
-async def _broadcast_ws():
+async def _broadcast_ws(msg_type="update"):
     dead = set()
     for ws in ws_clients:
         try:
-            await ws.send_json({"type": "update"})
+            await ws.send_json({"type": msg_type})
         except Exception:
             dead.add(ws)
     ws_clients.difference_update(dead)
@@ -423,6 +425,87 @@ async def handle_api_action(request):
         return web.json_response({"error": str(e)}, status=500)
 
 
+async def handle_report_page(request):
+    try:
+        with open("report.html", "r", encoding="utf-8") as f:
+            return web.Response(text=f.read(), content_type="text/html")
+    except Exception as e:
+        return web.Response(text=f"Error: {e}", status=500)
+
+
+async def handle_api_report(request):
+    global _report_counter
+    try:
+        body = await request.json()
+        key     = body.get("key", "").strip()
+        version = body.get("version", "").strip()
+        module  = body.get("module", "").strip()
+        hwid    = body.get("hwid", "").strip()
+        debug_c = body.get("debug_code", "").strip()
+        error   = body.get("error", "").strip()[:1000]
+        system  = body.get("system", "").strip()[:200]
+
+        if not key or not error:
+            return web.json_response({"error": "Wymagane: key, error"}, status=400)
+
+        _report_counter += 1
+        report = {
+            "id":         _report_counter,
+            "time":       datetime.now().strftime("%H:%M:%S"),
+            "date":       datetime.now().strftime("%Y-%m-%d"),
+            "key":        key,
+            "hwid":       hwid,
+            "version":    version,
+            "module":     module,
+            "debug_code": debug_c,
+            "error":      error,
+            "system":     system,
+            "status":     "new",
+        }
+        bug_reports.insert(0, report)
+        if len(bug_reports) > 500:
+            bug_reports.pop()
+
+        log_activity("REPORT", f"Raport #{_report_counter} od {key[:9]}... — {error[:50]}")
+        asyncio.ensure_future(_broadcast_ws("report"))
+        return web.json_response({"ok": True, "id": _report_counter})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
+async def handle_api_reports(request):
+    return web.json_response(bug_reports)
+
+
+async def handle_api_report_action(request):
+    try:
+        body   = await request.json()
+        action = body.get("action")
+        rid    = body.get("id")
+
+        if action == "read":
+            for r in bug_reports:
+                if r["id"] == rid:
+                    r["status"] = "read"
+                    break
+        elif action == "delete":
+            idx = next((i for i, r in enumerate(bug_reports) if r["id"] == rid), None)
+            if idx is not None:
+                bug_reports.pop(idx)
+        elif action == "read_all":
+            for r in bug_reports:
+                r["status"] = "read"
+        elif action == "delete_all":
+            bug_reports.clear()
+        else:
+            return web.json_response({"error": "Nieznana akcja"}, status=400)
+
+        asyncio.ensure_future(_broadcast_ws("report"))
+        return web.json_response({"ok": True})
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
+
 async def handle_ws(request):
     ws = web.WebSocketResponse()
     await ws.prepare(request)
@@ -437,13 +520,17 @@ async def handle_ws(request):
 
 async def start_webserver():
     app = web.Application()
-    app.router.add_get("/",             handle_root)
-    app.router.add_get("/ws",           handle_ws)
-    app.router.add_get("/api/licenses", handle_api_licenses)
-    app.router.add_get("/api/log",      handle_api_log)
-    app.router.add_get("/api/stats",    handle_api_stats)
-    app.router.add_get("/api/generate", handle_api_generate)
-    app.router.add_post("/api/action",  handle_api_action)
+    app.router.add_get("/",                    handle_root)
+    app.router.add_get("/ws",                  handle_ws)
+    app.router.add_get("/api/licenses",        handle_api_licenses)
+    app.router.add_get("/api/log",             handle_api_log)
+    app.router.add_get("/api/stats",           handle_api_stats)
+    app.router.add_get("/api/generate",        handle_api_generate)
+    app.router.add_post("/api/action",         handle_api_action)
+    app.router.add_get("/report",              handle_report_page)
+    app.router.add_post("/api/report",         handle_api_report)
+    app.router.add_get("/api/reports",         handle_api_reports)
+    app.router.add_post("/api/report-action",  handle_api_report_action)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", 5000)

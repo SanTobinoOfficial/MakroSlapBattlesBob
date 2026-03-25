@@ -1,4 +1,4 @@
-name: Build & Release
+name: Release
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Wersja release (np. v1.4.1)'
+        description: 'Wersja release (np. v1.4.2)'
         required: true
         type: string
       prerelease:
@@ -24,9 +24,9 @@ on:
         type: string
 
 jobs:
-  build:
-    name: Kompilacja AHK i tworzenie release
-    runs-on: windows-latest
+  release:
+    name: Tworzenie release
+    runs-on: ubuntu-latest
     permissions:
       contents: write
 
@@ -38,133 +38,74 @@ jobs:
 
       - name: Ustal wersje
         id: version
-        shell: pwsh
         run: |
-          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            $ver = "${{ github.event.inputs.version }}"
-            if (-not $ver.StartsWith("v")) { $ver = "v$ver" }
-            echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
-            echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $env:GITHUB_OUTPUT
-          } else {
-            echo "VERSION=${{ github.ref_name }}" >> $env:GITHUB_OUTPUT
-            echo "IS_PRERELEASE=false" >> $env:GITHUB_OUTPUT
-          }
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ver="${{ github.event.inputs.version }}"
+            [[ "$ver" != v* ]] && ver="v$ver"
+            echo "VERSION=$ver" >> $GITHUB_OUTPUT
+            echo "IS_PRERELEASE=${{ github.event.inputs.prerelease }}" >> $GITHUB_OUTPUT
+          else
+            echo "VERSION=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "IS_PRERELEASE=false" >> $GITHUB_OUTPUT
+          fi
 
       - name: Utworz tag (manual dispatch)
         if: github.event_name == 'workflow_dispatch'
-        shell: pwsh
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $ver = "${{ steps.version.outputs.VERSION }}"
+          ver="${{ steps.version.outputs.VERSION }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          $existing = git tag -l $ver
-          if (-not $existing) {
-            git tag $ver
-            git push origin $ver
-            Write-Host "Tag $ver utworzony."
-          } else {
-            Write-Host "Tag $ver juz istnieje."
-          }
-
-      - name: Zainstaluj AutoHotkey v2 i Ahk2Exe
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path "C:\AHK2" -Force | Out-Null
-
-          Write-Host "Pobieranie AutoHotkey64.exe..."
-          $ahkUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.22/AutoHotkey_2.0.22.zip"
-          Invoke-WebRequest -Uri $ahkUrl -OutFile "ahk.zip" -UseBasicParsing
-          Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $zip = [System.IO.Compression.ZipFile]::OpenRead("ahk.zip")
-          $entry = $zip.Entries | Where-Object { $_.Name -eq "AutoHotkey64.exe" } | Select-Object -First 1
-          [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry, "C:\AHK2\AutoHotkey64.exe", $true)
-          $zip.Dispose()
-
-          Write-Host "Pobieranie Ahk2Exe..."
-          $a2eUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a2/Ahk2Exe.zip"
-          Invoke-WebRequest -Uri $a2eUrl -OutFile "ahk2exe.zip" -UseBasicParsing
-          $zip2 = [System.IO.Compression.ZipFile]::OpenRead("ahk2exe.zip")
-          $entry2 = $zip2.Entries | Where-Object { $_.Name -eq "Ahk2Exe.exe" } | Select-Object -First 1
-          [System.IO.Compression.ZipFileExtensions]::ExtractToFile($entry2, "C:\AHK2\Ahk2Exe.exe", $true)
-          $zip2.Dispose()
-
-          Write-Host "Gotowe:"
-          Get-ChildItem "C:\AHK2\"
-
-      - name: Kompiluj makro
-        shell: pwsh
-        run: |
-          $compiler = "C:\AHK2\Ahk2Exe.exe"
-          $base = "C:\AHK2\AutoHotkey64.exe"
-          $src = (Resolve-Path "SlapBattlesMultiMacro.ahk").Path
-          $out = (Join-Path $PWD "SlapBattlesMultiMacro.exe")
-
-          if (-not (Test-Path $compiler)) {
-            Write-Error "Nie znaleziono Ahk2Exe.exe!"
-            exit 1
-          }
-
-          Write-Host "Uruchamiam Ahk2Exe z /base..."
-          $psi = New-Object System.Diagnostics.ProcessStartInfo
-          $psi.FileName = $compiler
-          $psi.Arguments = "/in `"$src`" /out `"$out`" /base `"$base`""
-          $psi.UseShellExecute = $false
-          $p = [System.Diagnostics.Process]::Start($psi)
-          $finished = $p.WaitForExit(90000)
-          if (-not $finished) {
-            Write-Host "Timeout 90s - zabijam, sprawdzam czy exe powstal..."
-            $p.Kill()
-          } else {
-            Write-Host "Exit code: $($p.ExitCode)"
-          }
-
-          if (!(Test-Path $out)) {
-            Write-Error "Kompilacja nie powiodla sie - brak SlapBattlesMultiMacro.exe"
-            exit 1
-          }
-          Write-Host "OK - SlapBattlesMultiMacro.exe gotowy. Rozmiar: $((Get-Item $out).Length) bajtow"
+          if ! git ls-remote --tags origin "refs/tags/$ver" | grep -q "$ver"; then
+            git tag "$ver"
+            git push origin "$ver"
+            echo "Tag $ver utworzony."
+          else
+            echo "Tag $ver juz istnieje."
+          fi
 
       - name: Przygotuj notatki release
-        shell: pwsh
         run: |
-          $ver = "${{ steps.version.outputs.VERSION }}"
-          $custom = "${{ github.event.inputs.release_notes }}"
-          if ($custom) {
-            $custom | Out-File -FilePath "release_notes.md" -Encoding utf8
-          } else {
-            $body = "## Slap Battles Multi Macro $ver`n`n"
-            $body += "### Instalacja`n"
-            $body += "1. Pobierz ``SlapBattlesMultiMacro.exe```n"
-            $body += "2. Uruchom i zaakceptuj Warunki Uzytkowania`n"
-            $body += "3. Wpisz klucz licencyjny (otrzymasz od administratora)`n"
-            $body += "4. Poczekaj na aktywacje HWID`n"
-            $body += "5. Uruchom ponownie i wybierz modul`n`n"
-            $body += "### Wymagania`n"
-            $body += "- Windows 10 / 11`n"
-            $body += "- Roblox uruchomiony przed startem makra`n`n"
-            $body += "> Plik exe zawiera wbudowane srodowisko AutoHotkey - nie wymaga instalacji AHK."
-            $body | Out-File -FilePath "release_notes.md" -Encoding utf8
-          }
+          ver="${{ steps.version.outputs.VERSION }}"
+          custom="${{ github.event.inputs.release_notes }}"
+          if [ -n "$custom" ]; then
+            printf '%s' "$custom" > release_notes.md
+          else
+            cat > release_notes.md << 'NOTES'
+          ### Instalacja
+          1. Zainstaluj **[AutoHotkey v2](https://www.autohotkey.com/)** jeśli jeszcze nie masz
+          2. Pobierz `SlapBattlesMultiMacro.ahk`
+          3. Uruchom i zaakceptuj Warunki Użytkowania
+          4. Wpisz klucz licencyjny (otrzymasz od administratora)
+          5. Poczekaj na aktywację HWID przez admina
+          6. Uruchom ponownie i wybierz moduł
 
-      - name: Utworz Release i wgraj exe
+          ### Wymagania
+          - Windows 10 / 11
+          - AutoHotkey v2.0+
+          - Roblox uruchomiony przed startem makra
+          NOTES
+            # Add version header at top
+            printf "## Slap Battles Multi Macro $ver\n\n$(cat release_notes.md)" > release_notes.md
+          fi
+
+      - name: Utwórz Release i wgraj plik AHK
         env:
           GH_TOKEN: ${{ github.token }}
-        shell: pwsh
         run: |
-          $ver = "${{ steps.version.outputs.VERSION }}"
-          $pre = "${{ steps.version.outputs.IS_PRERELEASE }}"
+          ver="${{ steps.version.outputs.VERSION }}"
+          pre="${{ steps.version.outputs.IS_PRERELEASE }}"
 
-          gh release delete $ver --yes 2>$null
+          gh release delete "$ver" --yes 2>/dev/null || true
 
-          if ($pre -eq "true") {
-            gh release create $ver "SlapBattlesMultiMacro.exe" `
-              --title "Slap Battles Multi Macro $ver" `
-              --notes-file "release_notes.md" `
+          if [ "$pre" = "true" ]; then
+            gh release create "$ver" "SlapBattlesMultiMacro.ahk" \
+              --title "Slap Battles Multi Macro $ver" \
+              --notes-file "release_notes.md" \
               --prerelease
-          } else {
-            gh release create $ver "SlapBattlesMultiMacro.exe" `
-              --title "Slap Battles Multi Macro $ver" `
+          else
+            gh release create "$ver" "SlapBattlesMultiMacro.ahk" \
+              --title "Slap Battles Multi Macro $ver" \
               --notes-file "release_notes.md"
-          }
+          fi

@@ -173,9 +173,27 @@
   .toast.success { border-color: var(--green); }
   .toast.error   { border-color: var(--red); }
 
+  /* Reports */
+  .reports-section { margin-top: 24px; }
+  .report-item { padding: 14px 20px; border-bottom: 1px solid var(--border); display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; transition: background 0.15s; }
+  .report-item:last-child { border-bottom: none; }
+  .report-item:hover { background: rgba(99,102,241,0.04); }
+  .report-item.new { border-left: 3px solid var(--accent); }
+  .report-item.read { border-left: 3px solid transparent; opacity: 0.7; }
+  .report-meta { display: flex; flex-direction: column; gap: 3px; min-width: 130px; }
+  .report-key { font-family: var(--mono); font-size: 11px; color: var(--accent2); }
+  .report-time { font-family: var(--mono); font-size: 10px; color: var(--dim); }
+  .report-module { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .report-body { display: flex; flex-direction: column; gap: 4px; }
+  .report-error { font-size: 12px; color: var(--text); line-height: 1.5; }
+  .report-extra { font-family: var(--mono); font-size: 10px; color: var(--dim); display: flex; gap: 12px; flex-wrap: wrap; }
+  .report-actions { display: flex; gap: 5px; flex-shrink: 0; }
+  .unread-badge { background: var(--accent); color: #fff; border-radius: 100px; padding: 1px 7px; font-family: var(--mono); font-size: 10px; font-weight: 700; display: none; }
+
   @media (max-width: 900px) {
     .stats { grid-template-columns: repeat(2,1fr); }
     .main-grid { grid-template-columns: 1fr; }
+    .report-item { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -183,9 +201,13 @@
 <div class="wrap">
   <header>
     <div class="logo">⚔ <span>SBMM</span> Control Panel</div>
-    <div class="status-pill">
-      <div class="dot"></div>
-      <span id="status-text">Laczenie...</span>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="unread-badge" id="unread-badge">0</span>
+      <a href="/report" target="_blank" class="btn btn-ghost btn-sm" style="text-decoration:none">+ Strona zgłoszeń</a>
+      <div class="status-pill">
+        <div class="dot"></div>
+        <span id="status-text">Laczenie...</span>
+      </div>
     </div>
   </header>
 
@@ -246,6 +268,24 @@
           <div class="empty">Brak aktywnosci</div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reports section -->
+<div class="reports-section">
+  <div class="panel">
+    <div class="panel-head">
+      Raporty błędów
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="count" id="report-count">0</span>
+        <button class="btn btn-ghost btn-sm" onclick="reportAction('read_all',null)">Odczytaj wszystkie</button>
+        <button class="btn btn-danger btn-sm" onclick="reportAction('delete_all',null)">Usuń wszystkie</button>
+        <button class="btn btn-ghost btn-sm" onclick="loadReports()">↻</button>
+      </div>
+    </div>
+    <div id="reports-list">
+      <div class="empty">Brak zgłoszeń</div>
     </div>
   </div>
 </div>
@@ -527,6 +567,70 @@ async function action(act, key) {
   } catch(e) { toast(`Blad: ${e.message}`, 'error'); }
 }
 
+// ── Reports ───────────────────────────────────────────────────────
+const MODULE_LABELS = {
+  portal: 'BOB Portal', trap: 'Trap/Brick', obby: 'Obby Mastery',
+  replica: 'Replica Bob', manualbob: 'Manual Bob', critglove: 'Crit Glove'
+};
+
+async function loadReports() {
+  try {
+    const reports = await api('/api/reports');
+    const el = document.getElementById('reports-list');
+    document.getElementById('report-count').textContent = reports.length;
+    const unread = reports.filter(r => r.status === 'new').length;
+    const badge = document.getElementById('unread-badge');
+    if (unread > 0) {
+      badge.textContent = unread + ' nowe';
+      badge.style.display = 'inline';
+    } else {
+      badge.style.display = 'none';
+    }
+    if (!reports.length) {
+      el.innerHTML = '<div class="empty">Brak zgłoszeń</div>';
+      return;
+    }
+    el.innerHTML = reports.map(r => `
+      <div class="report-item ${r.status}">
+        <div class="report-meta">
+          <span class="report-key">${r.key}</span>
+          <span class="report-time">${r.date} ${r.time}</span>
+          ${r.module ? `<span class="report-module">${MODULE_LABELS[r.module] || r.module}</span>` : ''}
+        </div>
+        <div class="report-body">
+          <div class="report-error">${escHtml(r.error)}</div>
+          <div class="report-extra">
+            ${r.version   ? `<span>ver: ${escHtml(r.version)}</span>` : ''}
+            ${r.debug_code? `<span>debug: ${escHtml(r.debug_code)}</span>` : ''}
+            ${r.hwid      ? `<span>hwid: ${escHtml(r.hwid.substring(0,18))}…</span>` : ''}
+            ${r.system    ? `<span>sys: ${escHtml(r.system)}</span>` : ''}
+          </div>
+        </div>
+        <div class="report-actions">
+          ${r.status === 'new' ? `<button class="btn btn-ghost btn-sm" onclick="reportAction('read',${r.id})">Odczytaj</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="reportAction('delete',${r.id})">✕</button>
+        </div>
+      </div>
+    `).join('');
+  } catch {}
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function reportAction(action, id) {
+  if (action === 'delete_all' && !confirm('Usunąć wszystkie zgłoszenia?')) return;
+  try {
+    await api('/api/report-action', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({action, id})
+    });
+    await loadReports();
+  } catch(e) { toast(`Błąd: ${e.message}`, 'error'); }
+}
+
 // WebSocket live update
 let wsRetryDelay = 1000;
 function connectWS() {
@@ -537,7 +641,11 @@ function connectWS() {
     document.getElementById('status-text').textContent = 'Online (live)';
   };
   ws.onmessage = e => {
-    try { if (JSON.parse(e.data).type === 'update') loadAll(); } catch {}
+    try {
+      const msg = JSON.parse(e.data);
+      if (msg.type === 'update') loadAll();
+      else if (msg.type === 'report') loadReports();
+    } catch {}
   };
   ws.onclose = () => {
     document.getElementById('status-text').textContent = 'Reconnecting...';
@@ -548,8 +656,10 @@ function connectWS() {
 }
 
 loadAll();
+loadReports();
 connectWS();
 setInterval(loadAll, 15000);
+setInterval(loadReports, 30000);
 </script>
 </body>
 </html>
