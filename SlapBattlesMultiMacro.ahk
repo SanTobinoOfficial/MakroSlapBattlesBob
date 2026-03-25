@@ -2,14 +2,14 @@
 #SingleInstance Force
 
 ; ╔══════════════════════════════════════════════╗
-; ║   SLAP BATTLES MULTI MACRO  —  v1.4.1       ║
+; ║   SLAP BATTLES MULTI MACRO  —  v1.4.2       ║
 ; ╚══════════════════════════════════════════════╝
 
 ; ══════════════════════════════════════════════
 ; STAŁE APLIKACJI
 ; ══════════════════════════════════════════════
 global APP_NAME    := "Slap Battles Multi Macro"
-global APP_VERSION := "v1.4.1"
+global APP_VERSION := "v1.4.2"
 
 global licenseFile := A_AppData "\SBMM\license.dat"
 global jsonURL     := "https://gist.githubusercontent.com/SanTobinoOfficial/4700f4452a52144b6e3922501b55dcf1/raw/licenses.json"

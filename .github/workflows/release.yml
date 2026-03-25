@@ -74,7 +74,7 @@ jobs:
           New-Item -ItemType Directory -Path "C:\AHK2" -Force | Out-Null
 
           Write-Host "Pobieranie AutoHotkey64.exe..."
-          $ahkUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.19/AutoHotkey_2.0.19.zip"
+          $ahkUrl = "https://github.com/AutoHotkey/AutoHotkey/releases/download/v2.0.22/AutoHotkey_2.0.22.zip"
           Invoke-WebRequest -Uri $ahkUrl -OutFile "ahk.zip" -UseBasicParsing
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $zip = [System.IO.Compression.ZipFile]::OpenRead("ahk.zip")
@@ -83,7 +83,7 @@ jobs:
           $zip.Dispose()
 
           Write-Host "Pobieranie Ahk2Exe..."
-          $a2eUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a0a/Ahk2Exe1.1.37.02a0.zip"
+          $a2eUrl = "https://github.com/AutoHotkey/Ahk2Exe/releases/download/Ahk2Exe1.1.37.02a2/Ahk2Exe.zip"
           Invoke-WebRequest -Uri $a2eUrl -OutFile "ahk2exe.zip" -UseBasicParsing
           $zip2 = [System.IO.Compression.ZipFile]::OpenRead("ahk2exe.zip")
           $entry2 = $zip2.Entries | Where-Object { $_.Name -eq "Ahk2Exe.exe" } | Select-Object -First 1
