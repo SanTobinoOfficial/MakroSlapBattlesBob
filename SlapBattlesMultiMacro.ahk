@@ -1348,7 +1348,7 @@ SavePortalSettings(*) {
     IniWrite P_siI.Value,               P_IniFile, "Makro",        "InterwalStatystyk"
     IniWrite P_apC.Value,               P_IniFile, "Makro",        "AutoPauza"
     IniWrite P_dzC.Value,               P_IniFile, "Makro",        "DzwiekBob"
-    if IsSet(P_adv_ClickSleep) {
+    try {
         IniWrite P_adv_ClickSleep.Value,    P_IniFile, "Zaawansowane", "ClickSleep"
         IniWrite P_adv_PostClickSleep.Value,P_IniFile, "Zaawansowane", "PostClickSleep"
         IniWrite P_adv_CloseX_SleepA.Value, P_IniFile, "Zaawansowane", "CloseXSleepA"
@@ -1371,8 +1371,6 @@ SavePortalSettings(*) {
         IniWrite P_adv_RedBaseY.Value,      P_IniFile, "Zaawansowane", "RedBaseY"
         portalX := SafeNum(P_adv_PortalX.Value, 956)
         portalY := SafeNum(P_adv_PortalY.Value, 982)
-    }
-    if IsSet(P_adv_GoToWTime) {
         IniWrite P_adv_GoToWTime.Value, P_IniFile, "GoToPortal", "WTime"
         IniWrite P_adv_GoToDTime.Value, P_IniFile, "GoToPortal", "DTime"
         IniWrite P_adv_GoToATime.Value, P_IniFile, "GoToPortal", "ATime"
