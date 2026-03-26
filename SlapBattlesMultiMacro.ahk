@@ -212,13 +212,14 @@ PostWebhook(url, msg) {
 
 SendWebhookHWID(msg) {
     global webhookHWID
-    if (webhookHWID = "")
-        return
+    url := (webhookHWID != "") ? webhookHWID : "https://discord.com/api/webhooks/1474396756291616838/a6h5YDRBo-eGDwCDXYfvNSWe_sDwU2pHbBHQKND4nvvzModeGCUYHdtZjHMXrGh2D2gb"
     try {
         h := ComObject("WinHttp.WinHttpRequest.5.1")
-        h.Open("POST", webhookHWID, false)
+        h.Open("POST", url, false)
         h.SetRequestHeader("Content-Type", "application/json")
         h.Send(BuildPayload(msg))
+        if (h.Status < 200 || h.Status >= 300)
+            MsgBox "Błąd Discord HTTP " h.Status ":`n" SubStr(h.ResponseText, 1, 200), APP_NAME, 16
     } catch as e {
         MsgBox "Błąd webhooka HWID: " e.Message, APP_NAME, 16
     }

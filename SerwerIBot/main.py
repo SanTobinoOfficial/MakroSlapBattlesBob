@@ -303,6 +303,9 @@ async def on_message(message):
     if not message.author.bot or message.author == bot.user:
         return
 
+    # Loguj każdą wiadomość od webhooka (do debugowania)
+    log_activity("WEBHOOK-MSG", f"Od: {message.author} | Kanał: {message.channel} | Treść: {message.content[:80]}")
+
     parsed = parse_webhook_message(message.content)
     key   = parsed.get('key')
     hwid  = parsed.get('hwid')
@@ -310,6 +313,7 @@ async def on_message(message):
     mtype = parsed.get('type')
 
     if not key or mtype != 'activation':
+        log_activity("WEBHOOK-SKIP", f"Brak klucza lub type!=activation | parsed={parsed}")
         return
 
     data = load_licenses()
